@@ -10,8 +10,7 @@
     "build:plugins": "pnpm --filter \"./plugins/*\" build",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
-    "e2e": "node e2e/run.mjs && node e2e/run.mjs --cached",
-    "dev": "pnpm --filter example-site dev"
+    "e2e": "node e2e/run.mjs && node e2e/run.mjs --cached"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

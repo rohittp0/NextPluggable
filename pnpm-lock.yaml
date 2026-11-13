@@ -24,7 +24,7 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0(@types/node@22.20.5)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2))
 
-  examples/site:
+  e2e/site:
     dependencies:
       next:
         specifier: 16.4.6

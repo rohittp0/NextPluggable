@@ -5,7 +5,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: { default: 'Harbor Lending', template: '%s · Harbor Lending' },
-  description: 'A demo site for NextPluggable.',
+  description: 'The site the NextPluggable browser test runs against.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="site-footer">
           <div className="wrap">
             <np.Slot name="footer" />
-            <p>© Harbor Lending. A demo site.</p>
+            <p>© Harbor Lending. A test site.</p>
           </div>
         </footer>
         <np.Slot name="body.end" />

@@ -229,21 +229,8 @@ SDK only makes it available in the browser.
 | `packages/nextpluggable` | The package sites install: dashboard, sign-in, storage, GitHub sources, installer, runtime |
 | `packages/plugin` | `@nextpluggable/plugin`: the SDK and build tool for plugin authors |
 | `plugins/` | Reference plugins, with their built `dist/` committed |
-| `examples/site` | A demo Next.js site with everything wired up |
-| `e2e/` | Browser test of the whole owner journey against a mock GitHub API |
+| `e2e/` | Browser test of the whole owner journey against a mock GitHub API, and the small Next.js site (`e2e/site`) it runs against |
 | `docs/` | [Research and decisions](docs/research.md), [writing plugins](docs/writing-plugins.md) |
-
-### Try it
-
-```bash
-pnpm install
-pnpm build
-cp examples/site/.env.example examples/site/.env.local   # then set a password
-pnpm dev                                                  # http://localhost:3000/admin/plugins
-```
-
-In the dashboard, connect `https://github.com/rohittp0/NextPluggable` as a source, or,
-while developing, the path of this folder on your machine.
 
 ### Checks
 

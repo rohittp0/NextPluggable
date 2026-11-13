@@ -1,10 +1,10 @@
-// End-to-end test: drives the example site in a real browser the way a site
-// owner would, against a mock GitHub API.
+// End-to-end test: drives a small Next.js site (e2e/site) in a real browser the
+// way a site owner would, against a mock GitHub API.
 //
 //   pnpm build && pnpm e2e
 //
-// Runs against the example as committed (plugin pages rendered per request).
-// With --cached it first switches on the optional page caching in the example's
+// Runs against that site as committed (plugin pages rendered per request).
+// With --cached it first switches on the optional page caching in the site's
 // catch-all route, so that mode is exercised too; the file is restored afterwards.
 //
 import { spawn, spawnSync } from 'node:child_process';
@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { PRIVATE_TOKEN, startMockGitHub } from './mock-github.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const site = path.join(root, 'examples/site');
+const site = path.join(root, 'e2e/site');
 const nextBin = path.join(site, 'node_modules/next/dist/bin/next');
 const PASSWORD = 'e2e-password';
 const cached = process.argv.includes('--cached');
@@ -73,10 +73,10 @@ const env = {
   NEXT_TELEMETRY_DISABLED: '1',
 };
 
-console.log(`Building the example site (${cached ? 'plugin pages cached' : 'plugin pages rendered per request'})…`);
+console.log(`Building the test site (${cached ? 'plugin pages cached' : 'plugin pages rendered per request'})…`);
 if (cached) {
   const enabled = routeSource.replace('// export const generateStaticParams', 'export const generateStaticParams').replace('// export const revalidate', 'export const revalidate');
-  if (enabled === routeSource) throw new Error('Could not find the caching lines to switch on in the example route.');
+  if (enabled === routeSource) throw new Error('Could not find the caching lines to switch on in the test site route.');
   await writeFile(routeFile, enabled);
 }
 const built = spawnSync(process.execPath, [nextBin, 'build'], { cwd: site, env, stdio: ['ignore', 'ignore', 'inherit'] });

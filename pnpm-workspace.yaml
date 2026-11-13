@@ -1,7 +1,7 @@
 packages:
   - "packages/*"
   - "plugins/*"
-  - "examples/*"
+  - "e2e/site"
 onlyBuiltDependencies:
   - esbuild
   - sharp
