@@ -6,6 +6,7 @@ import { getInstalledPlugins } from '../core/state.js';
 import { getFile, getInstalls } from '../core/store.js';
 import type { FileKind } from '../core/types.js';
 import { HttpError, jsonResponse } from '../errors.js';
+import { warnOnce } from '../globals.js';
 import { buildDashboardState, type SessionView } from '../views.js';
 
 export interface HandlerHooks {
@@ -18,21 +19,38 @@ const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 /** Header every dashboard/plugin write must carry. Browsers will not send it cross-site without a CORS preflight, which we never grant. */
 export const CSRF_HEADER = 'x-nextpluggable';
 
-function sameOrigin(request: Request): boolean {
+const hostOf = (value: string | null | undefined): string | null => {
+  if (!value) return null;
+  try {
+    return new URL(value.includes('://') ? value : `http://${value}`).host.toLowerCase();
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * A browser states where a write came from in its Origin header. It must be this site: the host
+ * the request was addressed to, the host a proxy says it forwarded, or the site's configured
+ * public address (for proxies that rewrite the host and forward nothing).
+ */
+function sameOrigin(request: Request, cfg: ResolvedConfig): boolean {
   const origin = request.headers.get('origin');
   if (!origin) return true; // non-browser clients; the custom header check still applies
-  const host = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim() ?? request.headers.get('host') ?? new URL(request.url).host;
-  try {
-    return new URL(origin).host === host;
-  } catch {
-    return false;
-  }
+  const from = hostOf(origin);
+  if (!from) return false;
+  const here = [request.headers.get('x-forwarded-host')?.split(',')[0]?.trim(), request.headers.get('host'), new URL(request.url).host, cfg.siteUrl].map(hostOf);
+  if (here.includes(from)) return true;
+  warnOnce(
+    `origin:${from}`,
+    `Blocked a write from ${origin}: it does not match this site (addressed to ${request.headers.get('host') ?? 'unknown'}, forwarded host ${request.headers.get('x-forwarded-host') ?? 'none'}, configured address ${cfg.siteUrl}). If the site sits behind a proxy, set NEXT_PUBLIC_SITE_URL (or siteUrl) to its public address.`,
+  );
+  return false;
 }
 
 /** Look a plugin up by an id that came from a URL, ignoring inherited object properties. */
 const own = <T,>(map: Record<string, T>, key: string): T | undefined => (Object.hasOwn(map, key) ? map[key] : undefined);
 
-const csrfOk = (request: Request) => request.headers.get(CSRF_HEADER) === '1' && sameOrigin(request);
+const csrfOk = (request: Request, cfg: ResolvedConfig) => request.headers.get(CSRF_HEADER) === '1' && sameOrigin(request, cfg);
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {
   const text = await request.text();
@@ -102,7 +120,7 @@ export function createHandler(getConfig: () => ResolvedConfig, hooks: HandlerHoo
       const install = own(await getInstalledPlugins(cfg), seg[1]);
       if (!install || !install.enabled) return jsonResponse({ error: 'Not found.' }, 404);
       // A plugin only sees the dashboard user when the request provably came from this site's own pages.
-      const admin = !MUTATING.has(method) || csrfOk(request) ? await cfg.auth.getUser(request, env).catch(() => null) : null;
+      const admin = !MUTATING.has(method) || csrfOk(request, cfg) ? await cfg.auth.getUser(request, env).catch(() => null) : null;
       const res = await handlePluginApi(cfg, install, request, `/${seg.slice(2).join('/')}`, admin);
       if (MUTATING.has(method) && admin) await hooks.onSiteChange?.();
       return res;
@@ -110,7 +128,7 @@ export function createHandler(getConfig: () => ResolvedConfig, hooks: HandlerHoo
 
     // ---- session
     if (seg[0] === 'session' && method === 'GET') return jsonResponse(await sessionView(cfg, request));
-    if (MUTATING.has(method) && !csrfOk(request)) throw new HttpError(403, 'This request was blocked for security reasons. Reload the page and try again.');
+    if (MUTATING.has(method) && !csrfOk(request, cfg)) throw new HttpError(403, 'This request was blocked for security reasons. Reload the page and try again.');
     if (seg[0] === 'login' && method === 'POST') {
       if (!cfg.auth.login) throw new HttpError(404, 'This site signs in a different way.');
       return cfg.auth.login(request, env);

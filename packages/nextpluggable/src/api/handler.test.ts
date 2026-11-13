@@ -137,8 +137,13 @@ describe('access control', () => {
     expect((await s.call('POST', '/login', { password: PASSWORD }, { csrf: false, cookie: null })).status).toBe(403);
     expect((await s.call('POST', '/admin/refresh', {}, { headers: { origin: 'https://evil.example' } })).status).toBe(403);
     expect((await s.call('POST', '/admin/refresh', {}, { headers: { origin: ORIGIN } })).status).toBe(200);
-    // Behind a proxy the public host arrives in x-forwarded-host.
+    // Behind a proxy the public host arrives in x-forwarded-host…
     expect((await s.call('POST', '/admin/refresh', {}, { headers: { host: 'internal:3000', 'x-forwarded-host': 'site.test', origin: ORIGIN } })).status).toBe(200);
+    // …and if the proxy rewrites the host and forwards nothing, the configured site address vouches for it.
+    expect((await s.call('POST', '/admin/refresh', {}, { headers: { host: 'internal:3000', origin: ORIGIN } })).status).toBe(200);
+    expect((await s.call('POST', '/admin/refresh', {}, { headers: { host: 'internal:3000', origin: 'https://evil.example' } })).status).toBe(403);
+    expect((await s.call('POST', '/admin/refresh', {}, { headers: { host: 'internal:3000', 'x-forwarded-host': 'evil.example', origin: 'https://other.example' } })).status).toBe(403);
+    expect((await s.call('POST', '/admin/refresh', {}, { headers: { origin: 'null' } })).status).toBe(403);
   });
 
   it('reports the session and signs out', async () => {
