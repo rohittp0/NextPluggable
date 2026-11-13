@@ -1,6 +1,6 @@
 {
   "name": "nextpluggable",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "WordPress-style plugins for Next.js: a dashboard where site owners install full-featured plugins from GitHub repositories, with no rebuild.",
   "repository": { "type": "git", "url": "git+https://github.com/rohittp0/NextPluggable.git", "directory": "packages/nextpluggable" },
   "homepage": "https://github.com/rohittp0/NextPluggable#readme",

@@ -1,6 +1,6 @@
 {
   "name": "@nextpluggable/plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "SDK and build tool for writing NextPluggable plugins",
   "repository": { "type": "git", "url": "git+https://github.com/rohittp0/NextPluggable.git", "directory": "packages/plugin" },
   "homepage": "https://github.com/rohittp0/NextPluggable#readme",
