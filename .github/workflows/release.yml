@@ -15,7 +15,7 @@ concurrency:
 
 permissions:
   contents: write # the version commit, the tag and the GitHub release
-  id-token: write # npm trusted publishing and provenance
+  id-token: write # lets npm verify this run as the packages' trusted publisher
 
 jobs:
   release:
@@ -58,15 +58,13 @@ jobs:
         if: steps.gate.outputs.release == 'true'
         run: node scripts/release-version.mjs
 
-      - name: Check that a first release can sign in to npm
+      # npm only lets a workflow publish a package that already exists and names this
+      # workflow as its trusted publisher, so the very first version is published by hand.
+      - name: Check that the packages exist on npm
         if: steps.gate.outputs.release == 'true' && steps.version.outputs.first_publish == 'true'
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if [ -z "$NPM_TOKEN" ]; then
-            echo "::error::These packages are not on npm yet, and a package's first release cannot use trusted publishing. Add an npm access token that may publish as the repository secret NPM_TOKEN, then run this workflow again."
-            exit 1
-          fi
+          echo "::error::These packages are not on npm yet. Publish the first version by hand, then add release.yml as the trusted publisher of both packages on npmjs.com (see Releases in the README), and run this workflow again."
+          exit 1
 
       - name: Build and test
         if: steps.gate.outputs.release == 'true'
@@ -91,21 +89,16 @@ jobs:
           done
           ls -l "$RUNNER_TEMP/release"
 
-      # npm signs in through trusted publishing where it is set up for a package, and
-      # otherwise with the token.
+      # No token is stored anywhere: npm signs this run in through trusted publishing
+      # (the `id-token` permission above) and attaches provenance on its own.
       - name: Publish to npm
         if: steps.gate.outputs.release == 'true'
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          if [ -n "$NPM_TOKEN" ]; then
-            echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > "$RUNNER_TEMP/npmrc"
-            export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/npmrc"
-          fi
           # The SDK first: `nextpluggable` depends on this exact version of it.
           for name in nextpluggable-plugin nextpluggable; do
-            npm publish "$RUNNER_TEMP/release/$name-$VERSION.tgz" --access public --provenance
+            npm publish "$RUNNER_TEMP/release/$name-$VERSION.tgz" --access public
           done
 
       - name: Record the version on main

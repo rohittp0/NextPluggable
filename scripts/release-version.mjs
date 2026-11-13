@@ -80,7 +80,7 @@ async function main() {
   const onRegistry = await Promise.all(manifests.map((m) => publishedVersions(m.name)));
   const version = nextVersion(current, onRegistry.flatMap((v) => v ?? []));
   const changed = version !== current;
-  // A package that is not on the registry yet cannot use trusted publishing: its first release needs a token.
+  // A package that is not on the registry yet cannot name a trusted publisher: its first version is published by hand.
   const firstPublish = onRegistry.some((v) => v === null);
 
   if (changed && !dryRun) for (const file of files) writeFileSync(file, setVersion(readFileSync(file, 'utf8'), version));

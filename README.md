@@ -252,6 +252,20 @@ commit and creates a GitHub release. The patch number goes up by one each time. 
 minor or major release, set the new version in both `packages/*/package.json` files in
 the pull request; it is published as it is, and patch releases continue from there.
 
-The first release needs an npm access token in the repository secret `NPM_TOKEN`.
-Once the packages exist on npm, each can be given `release.yml` as a
-[trusted publisher](https://docs.npmjs.com/trusted-publishers) and the token removed.
+No npm token is stored in the repository. npm lets the workflow publish because each
+package names it as its [trusted publisher](https://docs.npmjs.com/trusted-publishers),
+which can only be set up once a package exists. So there is a one-time setup:
+
+1. Publish the first version by hand, signed in to npm as yourself:
+
+   ```bash
+   pnpm install && pnpm build
+   (cd packages/plugin && pnpm publish --access public --no-git-checks)
+   (cd packages/nextpluggable && pnpm publish --access public --no-git-checks)
+   ```
+
+2. On npmjs.com, open each package's settings and add a trusted publisher: GitHub
+   Actions, user `rohittp0`, repository `NextPluggable`, workflow `release.yml`, with
+   `npm publish` allowed.
+3. Merge to `main` within two days. npm drops a trusted publisher that has not
+   published by then.
