@@ -1,0 +1,147 @@
+{
+  "buildVersion": 1,
+  "manifest": {
+    "manifestVersion": 1,
+    "id": "emi-calculator",
+    "name": "EMI Calculator",
+    "version": "1.0.0",
+    "description": "A loan EMI calculator page with a yearly repayment schedule. Visitors adjust amount, interest rate and tenure and see their monthly instalment instantly.",
+    "author": "NextPluggable",
+    "icon": "🧮",
+    "category": "Tools",
+    "pages": [
+      {
+        "id": "calculator",
+        "path": "/emi-calculator",
+        "component": "CalculatorPage",
+        "title": "EMI Calculator",
+        "description": "The calculator page your visitors use."
+      }
+    ],
+    "settings": [
+      {
+        "key": "heading",
+        "label": "Page heading",
+        "type": "text",
+        "default": "EMI Calculator",
+        "required": true,
+        "group": "Content"
+      },
+      {
+        "key": "intro",
+        "label": "Introduction",
+        "type": "textarea",
+        "default": "Work out your monthly instalment in seconds. Adjust the loan amount, interest rate and tenure to see how they change what you pay.",
+        "help": "A short paragraph shown under the heading. It also becomes the page description on Google.",
+        "group": "Content"
+      },
+      {
+        "key": "ctaLabel",
+        "label": "Button text",
+        "type": "text",
+        "placeholder": "Apply now",
+        "help": "Optional. Shows a button under the result.",
+        "group": "Content"
+      },
+      {
+        "key": "ctaUrl",
+        "label": "Button link",
+        "type": "url",
+        "placeholder": "https://example.com/apply",
+        "group": "Content"
+      },
+      {
+        "key": "currency",
+        "label": "Currency symbol",
+        "type": "text",
+        "default": "₹",
+        "required": true,
+        "group": "Numbers"
+      },
+      {
+        "key": "grouping",
+        "label": "Number format",
+        "type": "select",
+        "default": "indian",
+        "options": [
+          {
+            "value": "indian",
+            "label": "Indian (12,34,567)"
+          },
+          {
+            "value": "international",
+            "label": "International (1,234,567)"
+          }
+        ],
+        "group": "Numbers"
+      },
+      {
+        "key": "defaultAmount",
+        "label": "Starting loan amount",
+        "type": "number",
+        "default": 2500000,
+        "min": 1000,
+        "group": "Numbers"
+      },
+      {
+        "key": "maxAmount",
+        "label": "Largest loan amount",
+        "type": "number",
+        "default": 20000000,
+        "min": 10000,
+        "group": "Numbers"
+      },
+      {
+        "key": "defaultRate",
+        "label": "Starting interest rate (% per year)",
+        "type": "number",
+        "default": 8.5,
+        "min": 0,
+        "max": 40,
+        "step": 0.05,
+        "group": "Numbers"
+      },
+      {
+        "key": "defaultYears",
+        "label": "Starting tenure (years)",
+        "type": "number",
+        "default": 20,
+        "min": 1,
+        "max": 40,
+        "group": "Numbers"
+      },
+      {
+        "key": "showSchedule",
+        "label": "Show yearly repayment schedule",
+        "type": "toggle",
+        "default": true,
+        "group": "Appearance"
+      },
+      {
+        "key": "accent",
+        "label": "Accent colour",
+        "type": "color",
+        "default": "#2563eb",
+        "group": "Appearance"
+      }
+    ]
+  },
+  "icon": "🧮",
+  "files": {
+    "client": {
+      "path": "dist/client.js",
+      "sha256": "344180b72c3fe53e650acce78fac8efcd5b3d1f6adc0f7f2b4331297842378fd",
+      "bytes": 5003
+    },
+    "style": {
+      "path": "dist/style.css",
+      "sha256": "3ddc3ce869257a066950fff8847be258c8e27668190ed193c59362eaea39ab85",
+      "bytes": 3445
+    },
+    "server": {
+      "path": "dist/server.js",
+      "sha256": "3e23c8159f05d7530ca71e3d6c40c56f1d124be607eb4f0eeb85a36c405e97f7",
+      "bytes": 1476
+    }
+  }
+}

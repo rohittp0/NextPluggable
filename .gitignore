@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.nextpluggable/
+packages/*/dist/
+*.tsbuildinfo
+.env
+.env.local
+next-env.d.ts
+e2e/.tmp/
+.DS_Store
+
+# Written by `next dev` (Next.js's own notes for coding agents)
+examples/site/AGENTS.md

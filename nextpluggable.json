@@ -1,0 +1,8 @@
+{
+  "name": "NextPluggable official plugins",
+  "description": "Reference plugins maintained alongside NextPluggable.",
+  "plugins": [
+    "plugins/emi-calculator",
+    "plugins/enquiry-form"
+  ]
+}
