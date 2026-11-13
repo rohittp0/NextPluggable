@@ -7,6 +7,8 @@ import path from 'node:path';
 
 const SHA = { 1: 'a'.repeat(40), 2: 'b'.repeat(40) };
 export const PRIVATE_TOKEN = 'github_pat_good_token';
+/** The version the mock serves once it has been advanced: one patch above the committed one. */
+export const nextPatch = (version) => version.replace(/\d+$/, (n) => String(Number(n) + 1));
 
 export async function startMockGitHub(repoRoot) {
   let revision = 1;
@@ -51,7 +53,7 @@ export async function startMockGitHub(repoRoot) {
     if (repo === 'tampered' && file.endsWith('dist/client.js')) data = Buffer.concat([data, Buffer.from('\n;globalThis.__tampered=1;')]);
     if (repo === 'plugins' && revision === 2 && file === 'plugins/emi-calculator/dist/build.json') {
       const build = JSON.parse(data.toString('utf8'));
-      build.manifest.version = '1.0.1';
+      build.manifest.version = nextPatch(build.manifest.version);
       data = Buffer.from(JSON.stringify(build));
     }
     send(200, data, 'application/octet-stream');

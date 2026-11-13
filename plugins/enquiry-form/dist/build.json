@@ -4,7 +4,7 @@
     "manifestVersion": 1,
     "id": "enquiry-form",
     "name": "Enquiry Form",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "A contact page that collects enquiries from visitors, an inbox in this dashboard to follow them up, and an optional floating button on every page.",
     "author": "NextPluggable",
     "icon": "✉️",
@@ -100,7 +100,8 @@
         "key": "accent",
         "label": "Accent colour",
         "type": "color",
-        "default": "#0f766e",
+        "placeholder": "Your site's colour",
+        "help": "Leave empty to use your site's own colour.",
         "group": "Appearance"
       },
       {
@@ -117,8 +118,8 @@
   "files": {
     "client": {
       "path": "dist/client.js",
-      "sha256": "2887787bb0edbfa427e338d819ca94365b8e81730ca54df43539ecda09eda246",
-      "bytes": 6146
+      "sha256": "dd232c5adf0eb4f7d1d4a1c34bafbcb65cf97b791eb5e09ae5962951037bc9ea",
+      "bytes": 6153
     },
     "style": {
       "path": "dist/style.css",

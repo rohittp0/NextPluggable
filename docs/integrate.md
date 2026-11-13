@@ -47,9 +47,9 @@ Then look for three things that change the steps below, and note what you find:
    `app/[locale]`). If there is one, plugin pages are served from it
    ([step 7](#7-serve-plugin-pages)).
 2. **Middleware that rewrites or redirects every path**, typically for locales. The
-   dashboard must be excluded from it ([step 8](#8-sites-with-locale-routing-or-other-middleware)).
+   dashboard must be excluded from it ([step 9](#9-sites-with-locale-routing-or-other-middleware)).
 3. **A root layout that does not render `<html>`** (a pass-through that leaves it to a
-   nested layout). The dashboard then needs a layout of its own (step 8).
+   nested layout). The dashboard then needs a layout of its own (step 9).
 
 ## 1. Install the package
 
@@ -345,10 +345,56 @@ Only do this when both of these hold:
 
 Do not use `export const dynamic = 'force-static'` for this route.
 
-**Check:** after installing a plugin with a page ([step 9](#9-verify)), its address
+**Check:** after installing a plugin with a page ([step 10](#10-verify)), its address
 returns 200, and an address nobody owns still returns what it returned before.
 
-## 8. Sites with locale routing or other middleware
+## 8. Give plugins the site's look
+
+**Colours.** Plugins take their colours from five CSS custom properties and fall back
+to neutral defaults when the site sets none. Set them once, in the global stylesheet,
+to the site's own values:
+
+```css
+:root {
+  --np-accent: #f57f2e; /* the brand colour: buttons, links, highlights */
+  --np-text: #111827; /* body text */
+  --np-muted: #6b7280; /* secondary text */
+  --np-border: #e5e7eb; /* lines and input borders */
+  --np-surface: #ffffff; /* the background of cards and inputs */
+}
+```
+
+Plugins inherit the site's font. A plugin may still offer a colour setting of its own;
+when the owner fills it in, their choice wins over `--np-accent`.
+
+**Header and footer.** A plugin page renders inside the layouts of the route that
+serves it, and nothing else. If the header and footer are in the root layout, plugin
+pages have them already. If each page renders its own, or they come from a layout the
+catch-all route is outside of, wrap `np.PluginPage` in the same frame the site's other
+pages use:
+
+```tsx
+// app/[...slug]/page.tsx
+import { np } from '@/lib/nextpluggable';
+import SiteFrame from '@/components/site-frame'; // your header, <main>, and footer
+
+export const generateMetadata = np.generatePluginMetadata;
+
+export default function Page(props: { params: Promise<{ slug: string[] }> }) {
+  return (
+    <SiteFrame>
+      <np.PluginPage params={props.params} />
+    </SiteFrame>
+  );
+}
+```
+
+An address no plugin owns still gets the site's 404 page, not an empty frame.
+
+**Check:** a plugin page has the site's header and footer, its text uses the site's
+font, and its buttons use the brand colour.
+
+## 9. Sites with locale routing or other middleware
 
 Skip this step if the site has no middleware and its root layout renders `<html>`.
 
@@ -397,7 +443,7 @@ in the settings and move the two files to match.
 **Check:** `/admin/plugins` returns the dashboard, not a redirect and not one of the
 site's own pages, including for a browser whose language is not the default locale.
 
-## 9. Verify
+## 10. Verify
 
 Run the site the way it runs in production. Some problems do not appear in `next dev`.
 
@@ -433,7 +479,7 @@ Then, in a browser:
 Last, compare the route table from `next build` with the one from before the change.
 Routes that were static should still be static.
 
-## 10. Deploy
+## 11. Deploy
 
 - Set `NEXTPLUGGABLE_PASSWORD`, `NEXTPLUGGABLE_SECRET` and the storage credentials on
   the host. The build needs the storage credentials too if static pages render a slot.
@@ -511,13 +557,15 @@ addresses. The dashboard refuses them.
 | The dashboard says setup is incomplete, naming `NEXTPLUGGABLE_SECRET` | No secret in production | Set a secret of at least 16 characters |
 | Sign-in answers "No dashboard password has been set up yet" | `NEXTPLUGGABLE_PASSWORD` is empty | Set it and restart |
 | "This request was blocked for security reasons" on every change | The request's origin does not match the site, usually behind a proxy | Set `NEXT_PUBLIC_SITE_URL` to the public address |
-| `/admin/plugins` redirects, or shows one of the site's own pages | Locale middleware handles the path | Exclude it ([step 8](#8-sites-with-locale-routing-or-other-middleware)) |
-| Next.js reports missing `<html>` and `<body>` tags for the dashboard | The root layout is a pass-through | Add `app/admin/layout.tsx` (step 8) |
+| `/admin/plugins` redirects, or shows one of the site's own pages | Locale middleware handles the path | Exclude it ([step 9](#9-sites-with-locale-routing-or-other-middleware)) |
+| Next.js reports missing `<html>` and `<body>` tags for the dashboard | The root layout is a pass-through | Add `app/admin/layout.tsx` (step 9) |
 | Installing fails with a read-only file system error | File storage on a serverless host | Use `upstashStorage()` or `postgresStorage()` |
 | "GitHub is limiting requests right now" | The unauthenticated limit of 60 requests an hour | Set `NEXTPLUGGABLE_GITHUB_TOKEN` |
 | A plugin is installed but its page shows the site's own content | The site's catch-all answers first | Serve plugin pages from it ([step 7](#7-serve-plugin-pages)) |
 | A plugin is installed but paused | A required setting has no value | Fill it in on the plugin's settings screen |
 | A plugin's widget does not appear | The layout has no slot with that name | Add `<np.Slot name="body.end" />` |
+| A plugin page has no header or footer | The site renders them per page, not in a layout above the catch-all | Wrap `np.PluginPage` in the site's page frame ([step 8](#8-give-plugins-the-sites-look)) |
+| Plugins use colours that do not match the site | The site sets none of the `--np-*` properties, or the owner chose a colour in the plugin's settings | Set them in the global stylesheet (step 8), or clear the plugin's colour setting |
 | Unknown addresses return 200 instead of 404 | A `loading.tsx` sits above the catch-all | Move it into a route group, or switch on caching |
 | Static pages became dynamic after adding a slot | A custom storage adapter calls `fetch` with `cache: 'no-store'` | Read storage without going through the `fetch` wrapper Next.js installs, as `upstashStorage()` does |
 
@@ -526,6 +574,7 @@ addresses. The dashboard refuses them.
 - [ ] `next build` succeeds, and routes that were static are still static.
 - [ ] `/admin/plugins` shows the dashboard and requires a sign-in.
 - [ ] A plugin installed from the dashboard serves its page without a rebuild.
+- [ ] That page has the site's header, footer, font and brand colour.
 - [ ] An address that no page owns behaves as it did before.
 - [ ] The password and secret are set on the host and are not in git.
 - [ ] On a serverless host, storage is a database adapter.

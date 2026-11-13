@@ -14,7 +14,7 @@ import { createServer } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PRIVATE_TOKEN, startMockGitHub } from './mock-github.mjs';
+import { PRIVATE_TOKEN, nextPatch, startMockGitHub } from './mock-github.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const site = path.join(root, 'e2e/site');
@@ -23,6 +23,7 @@ const PASSWORD = 'e2e-password';
 const cached = process.argv.includes('--cached');
 const routeFile = path.join(site, 'app/[...slug]/page.tsx');
 const routeSource = await readFile(routeFile, 'utf8');
+const emiNext = nextPatch(JSON.parse(await readFile(path.join(root, 'plugins/emi-calculator/plugin.json'), 'utf8')).version);
 
 let chromium;
 try {
@@ -279,9 +280,9 @@ try {
     github.advance();
     await page.goto(dash);
     await page.click('button:has-text("Check for updates")');
-    await page.click('button:has-text("Update to 1.0.1")');
-    await toast('EMI Calculator was updated to version 1.0.1.');
-    await page.waitForSelector('.np-row:has-text("EMI Calculator") >> text=v1.0.1');
+    await page.click(`button:has-text("Update to ${emiNext}")`);
+    await toast(`EMI Calculator was updated to version ${emiNext}.`);
+    await page.waitForSelector(`.np-row:has-text("EMI Calculator") >> text=v${emiNext}`);
     const { status, body } = await html('/loan-calculator');
     expect(status === 200 && body.includes('<h1>Home Loan Calculator</h1>'), 'settings and address must survive the update');
   });

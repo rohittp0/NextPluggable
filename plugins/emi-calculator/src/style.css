@@ -1,10 +1,11 @@
 .npemi {
-  --npemi-accent: #2563eb;
+  --npemi-accent: var(--np-accent, #2563eb);
   --npemi-ink: var(--np-text, #0f172a);
   --npemi-muted: var(--np-muted, #5b6474);
   --npemi-line: var(--np-border, #e2e6ee);
   --npemi-surface: var(--np-surface, #ffffff);
-  --npemi-interest: #f59e0b;
+  /* A tint of the accent, so the two parts of the bar stay apart whatever the site's colour is. */
+  --npemi-interest: color-mix(in srgb, var(--npemi-accent) 30%, var(--npemi-surface));
   color: var(--npemi-ink);
   max-width: 1040px;
   margin: 0 auto;
@@ -24,7 +25,14 @@
 .npemi-input:focus-within { border-color: var(--npemi-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--npemi-accent) 22%, transparent); }
 .npemi-input input { border: 0; outline: 0; background: transparent; color: var(--npemi-ink); font: inherit; font-weight: 600; width: 9ch; text-align: right; -moz-appearance: textfield; }
 .npemi-input input::-webkit-outer-spin-button, .npemi-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.npemi input[type='range'] { width: 100%; accent-color: var(--npemi-accent); margin: 0; height: 24px; }
+/* Drawn by hand: with a bright accent colour, browsers turn the built-in track near-black. */
+.npemi input[type='range'] { -webkit-appearance: none; appearance: none; width: 100%; height: 24px; margin: 0; background: transparent; cursor: pointer; }
+.npemi input[type='range']::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: linear-gradient(to right, var(--npemi-accent) var(--npemi-fill, 0%), var(--npemi-line) var(--npemi-fill, 0%)); }
+.npemi input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -6px; border-radius: 50%; background: var(--npemi-accent); border: 3px solid var(--npemi-surface); box-shadow: 0 0 0 1px var(--npemi-accent); }
+.npemi input[type='range']::-moz-range-track { height: 6px; border-radius: 999px; background: var(--npemi-line); }
+.npemi input[type='range']::-moz-range-progress { height: 6px; border-radius: 999px; background: var(--npemi-accent); }
+.npemi input[type='range']::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--npemi-accent); border: 3px solid var(--npemi-surface); box-shadow: 0 0 0 1px var(--npemi-accent); }
+.npemi input[type='range']:focus-visible { outline: 2px solid var(--npemi-accent); outline-offset: 2px; border-radius: 999px; }
 .npemi-result { position: sticky; top: 16px; }
 .npemi-label { margin: 0; color: var(--npemi-muted); font-size: 0.9rem; }
 .npemi-emi { margin: 4px 0 18px; font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }

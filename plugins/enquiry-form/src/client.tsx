@@ -12,10 +12,11 @@ interface Config {
   requireMessage: boolean;
   floatingButton: boolean;
   floatingLabel?: string;
-  accent: string;
+  accent?: string;
 }
 
-const accentStyle = (accent: string) => ({ ['--npenq-accent' as string]: accent });
+/** The owner's own colour, when they chose one. Otherwise the site's colour applies (see style.css). */
+const accentStyle = (accent?: string) => (accent ? { ['--npenq-accent' as string]: accent } : undefined);
 
 function Input(props: {
   name: string;

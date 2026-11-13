@@ -46,9 +46,10 @@
 <li class="toc-3"><a href="#the-site-already-has-a-catch-all-that-returns-404-for-unknown-addresses">The site already has a catch-all that returns 404 for unknown addresses</a></li>
 <li class="toc-3"><a href="#the-sites-catch-all-never-returns-404">The site&#39;s catch-all never returns 404</a></li>
 <li class="toc-3"><a href="#caching-plugin-pages-optional">Caching plugin pages (optional)</a></li>
-<li class="toc-2"><a href="#8-sites-with-locale-routing-or-other-middleware">8. Sites with locale routing or other middleware</a></li>
-<li class="toc-2"><a href="#9-verify">9. Verify</a></li>
-<li class="toc-2"><a href="#10-deploy">10. Deploy</a></li>
+<li class="toc-2"><a href="#8-give-plugins-the-sites-look">8. Give plugins the site&#39;s look</a></li>
+<li class="toc-2"><a href="#9-sites-with-locale-routing-or-other-middleware">9. Sites with locale routing or other middleware</a></li>
+<li class="toc-2"><a href="#10-verify">10. Verify</a></li>
+<li class="toc-2"><a href="#11-deploy">11. Deploy</a></li>
 <li class="toc-2"><a href="#settings-reference">Settings reference</a></li>
 <li class="toc-2"><a href="#security">Security</a></li>
 <li class="toc-2"><a href="#limits">Limits</a></li>
@@ -107,9 +108,9 @@ needs a database adapter (<a href="#4-choose-where-data-lives">step 4</a>).</li>
 <code>app/[locale]</code>). If there is one, plugin pages are served from it
 (<a href="#7-serve-plugin-pages">step 7</a>).</li>
 <li><strong>Middleware that rewrites or redirects every path</strong>, typically for locales. The
-dashboard must be excluded from it (<a href="#8-sites-with-locale-routing-or-other-middleware">step 8</a>).</li>
+dashboard must be excluded from it (<a href="#9-sites-with-locale-routing-or-other-middleware">step 9</a>).</li>
 <li><strong>A root layout that does not render <code>&lt;html&gt;</code></strong> (a pass-through that leaves it to a
-nested layout). The dashboard then needs a layout of its own (step 8).</li>
+nested layout). The dashboard then needs a layout of its own (step 9).</li>
 </ol>
 <h2 id="1-install-the-package"><a class="anchor" href="#1-install-the-package" aria-label="Link to this section">#</a>1. Install the package</h2>
 <div class="code"><div class="code-head"><span>bash</span><button type="button" class="code-copy" data-copy="npm install nextpluggable@latest"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code>npm install nextpluggable@latest</code></pre></div>
@@ -426,9 +427,61 @@ the address of the request that first generated a cached page, query string
 included, in that page&#39;s inline data, and serves it to later visitors.</li>
 </ul>
 <p>Do not use <code>export const dynamic = &#39;force-static&#39;</code> for this route.</p>
-<p class="check"><strong>Check:</strong> after installing a plugin with a page (<a href="#9-verify">step 9</a>), its address
+<p class="check"><strong>Check:</strong> after installing a plugin with a page (<a href="#10-verify">step 10</a>), its address
 returns 200, and an address nobody owns still returns what it returned before.</p>
-<h2 id="8-sites-with-locale-routing-or-other-middleware"><a class="anchor" href="#8-sites-with-locale-routing-or-other-middleware" aria-label="Link to this section">#</a>8. Sites with locale routing or other middleware</h2>
+<h2 id="8-give-plugins-the-sites-look"><a class="anchor" href="#8-give-plugins-the-sites-look" aria-label="Link to this section">#</a>8. Give plugins the site&#39;s look</h2>
+<p><strong>Colours.</strong> Plugins take their colours from five CSS custom properties and fall back
+to neutral defaults when the site sets none. Set them once, in the global stylesheet,
+to the site&#39;s own values:</p>
+<div class="code"><div class="code-head"><span>css</span><button type="button" class="code-copy" data-copy=":root {
+  --np-accent: #f57f2e; /* the brand colour: buttons, links, highlights */
+  --np-text: #111827; /* body text */
+  --np-muted: #6b7280; /* secondary text */
+  --np-border: #e5e7eb; /* lines and input borders */
+  --np-surface: #ffffff; /* the background of cards and inputs */
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-selector-pseudo">:root</span> {
+  <span class="hljs-attr">--np-accent</span>: <span class="hljs-number">#f57f2e</span>; <span class="hljs-comment">/* the brand colour: buttons, links, highlights */</span>
+  <span class="hljs-attr">--np-text</span>: <span class="hljs-number">#111827</span>; <span class="hljs-comment">/* body text */</span>
+  <span class="hljs-attr">--np-muted</span>: <span class="hljs-number">#6b7280</span>; <span class="hljs-comment">/* secondary text */</span>
+  <span class="hljs-attr">--np-border</span>: <span class="hljs-number">#e5e7eb</span>; <span class="hljs-comment">/* lines and input borders */</span>
+  <span class="hljs-attr">--np-surface</span>: <span class="hljs-number">#ffffff</span>; <span class="hljs-comment">/* the background of cards and inputs */</span>
+}</code></pre></div>
+<p>Plugins inherit the site&#39;s font. A plugin may still offer a colour setting of its own;
+when the owner fills it in, their choice wins over <code>--np-accent</code>.</p>
+<p><strong>Header and footer.</strong> A plugin page renders inside the layouts of the route that
+serves it, and nothing else. If the header and footer are in the root layout, plugin
+pages have them already. If each page renders its own, or they come from a layout the
+catch-all route is outside of, wrap <code>np.PluginPage</code> in the same frame the site&#39;s other
+pages use:</p>
+<div class="code"><div class="code-head"><span>tsx</span><button type="button" class="code-copy" data-copy="// app/[...slug]/page.tsx
+import { np } from '@/lib/nextpluggable';
+import SiteFrame from '@/components/site-frame'; // your header, &lt;main&gt;, and footer
+
+export const generateMetadata = np.generatePluginMetadata;
+
+export default function Page(props: { params: Promise&lt;{ slug: string[] }&gt; }) {
+  return (
+    &lt;SiteFrame&gt;
+      &lt;np.PluginPage params={props.params} /&gt;
+    &lt;/SiteFrame&gt;
+  );
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// app/[...slug]/page.tsx</span>
+<span class="hljs-keyword">import</span> { np } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@/lib/nextpluggable&#x27;</span>;
+<span class="hljs-keyword">import</span> <span class="hljs-title class_">SiteFrame</span> <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@/components/site-frame&#x27;</span>; <span class="hljs-comment">// your header, &lt;main&gt;, and footer</span>
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> generateMetadata = np.<span class="hljs-property">generatePluginMetadata</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">Page</span>(<span class="hljs-params"><span class="hljs-attr">props</span>: { params: <span class="hljs-built_in">Promise</span>&lt;{ slug: <span class="hljs-built_in">string</span>[] }&gt; }</span>) {
+  <span class="hljs-keyword">return</span> (
+    <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">SiteFrame</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">np.PluginPage</span> <span class="hljs-attr">params</span>=<span class="hljs-string">{props.params}</span> /&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">SiteFrame</span>&gt;</span></span>
+  );
+}</code></pre></div>
+<p>An address no plugin owns still gets the site&#39;s 404 page, not an empty frame.</p>
+<p class="check"><strong>Check:</strong> a plugin page has the site&#39;s header and footer, its text uses the site&#39;s
+font, and its buttons use the brand colour.</p>
+<h2 id="9-sites-with-locale-routing-or-other-middleware"><a class="anchor" href="#9-sites-with-locale-routing-or-other-middleware" aria-label="Link to this section">#</a>9. Sites with locale routing or other middleware</h2>
 <p>Skip this step if the site has no middleware and its root layout renders <code>&lt;html&gt;</code>.</p>
 <p><strong>Keep the dashboard out of locale middleware.</strong> The dashboard lives at one fixed
 address. Middleware that prefixes or rewrites paths (next-intl and similar) would send
@@ -472,7 +525,7 @@ link points at the address without the locale.</p>
 in the settings and move the two files to match.</p>
 <p class="check"><strong>Check:</strong> <code>/admin/plugins</code> returns the dashboard, not a redirect and not one of the
 site&#39;s own pages, including for a browser whose language is not the default locale.</p>
-<h2 id="9-verify"><a class="anchor" href="#9-verify" aria-label="Link to this section">#</a>9. Verify</h2>
+<h2 id="10-verify"><a class="anchor" href="#10-verify" aria-label="Link to this section">#</a>10. Verify</h2>
 <p>Run the site the way it runs in production. Some problems do not appear in <code>next dev</code>.</p>
 <div class="code"><div class="code-head"><span>bash</span><button type="button" class="code-copy" data-copy="npm run build
 npm run start"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code>npm run build
@@ -506,7 +559,7 @@ appears on the site&#39;s pages.</li>
 </ol>
 <p>Last, compare the route table from <code>next build</code> with the one from before the change.
 Routes that were static should still be static.</p>
-<h2 id="10-deploy"><a class="anchor" href="#10-deploy" aria-label="Link to this section">#</a>10. Deploy</h2>
+<h2 id="11-deploy"><a class="anchor" href="#11-deploy" aria-label="Link to this section">#</a>11. Deploy</h2>
 <ul>
 <li>Set <code>NEXTPLUGGABLE_PASSWORD</code>, <code>NEXTPLUGGABLE_SECRET</code> and the storage credentials on
 the host. The build needs the storage credentials too if static pages render a slot.</li>
@@ -583,13 +636,15 @@ catalogues, not for large or heavily queried data.</li>
 <tr><td>The dashboard says setup is incomplete, naming <code>NEXTPLUGGABLE_SECRET</code></td><td>No secret in production</td><td>Set a secret of at least 16 characters</td></tr>
 <tr><td>Sign-in answers &quot;No dashboard password has been set up yet&quot;</td><td><code>NEXTPLUGGABLE_PASSWORD</code> is empty</td><td>Set it and restart</td></tr>
 <tr><td>&quot;This request was blocked for security reasons&quot; on every change</td><td>The request&#39;s origin does not match the site, usually behind a proxy</td><td>Set <code>NEXT_PUBLIC_SITE_URL</code> to the public address</td></tr>
-<tr><td><code>/admin/plugins</code> redirects, or shows one of the site&#39;s own pages</td><td>Locale middleware handles the path</td><td>Exclude it (<a href="#8-sites-with-locale-routing-or-other-middleware">step 8</a>)</td></tr>
-<tr><td>Next.js reports missing <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags for the dashboard</td><td>The root layout is a pass-through</td><td>Add <code>app/admin/layout.tsx</code> (step 8)</td></tr>
+<tr><td><code>/admin/plugins</code> redirects, or shows one of the site&#39;s own pages</td><td>Locale middleware handles the path</td><td>Exclude it (<a href="#9-sites-with-locale-routing-or-other-middleware">step 9</a>)</td></tr>
+<tr><td>Next.js reports missing <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags for the dashboard</td><td>The root layout is a pass-through</td><td>Add <code>app/admin/layout.tsx</code> (step 9)</td></tr>
 <tr><td>Installing fails with a read-only file system error</td><td>File storage on a serverless host</td><td>Use <code>upstashStorage()</code> or <code>postgresStorage()</code></td></tr>
 <tr><td>&quot;GitHub is limiting requests right now&quot;</td><td>The unauthenticated limit of 60 requests an hour</td><td>Set <code>NEXTPLUGGABLE_GITHUB_TOKEN</code></td></tr>
 <tr><td>A plugin is installed but its page shows the site&#39;s own content</td><td>The site&#39;s catch-all answers first</td><td>Serve plugin pages from it (<a href="#7-serve-plugin-pages">step 7</a>)</td></tr>
 <tr><td>A plugin is installed but paused</td><td>A required setting has no value</td><td>Fill it in on the plugin&#39;s settings screen</td></tr>
 <tr><td>A plugin&#39;s widget does not appear</td><td>The layout has no slot with that name</td><td>Add <code>&lt;np.Slot name=&quot;body.end&quot; /&gt;</code></td></tr>
+<tr><td>A plugin page has no header or footer</td><td>The site renders them per page, not in a layout above the catch-all</td><td>Wrap <code>np.PluginPage</code> in the site&#39;s page frame (<a href="#8-give-plugins-the-sites-look">step 8</a>)</td></tr>
+<tr><td>Plugins use colours that do not match the site</td><td>The site sets none of the <code>--np-*</code> properties, or the owner chose a colour in the plugin&#39;s settings</td><td>Set them in the global stylesheet (step 8), or clear the plugin&#39;s colour setting</td></tr>
 <tr><td>Unknown addresses return 200 instead of 404</td><td>A <code>loading.tsx</code> sits above the catch-all</td><td>Move it into a route group, or switch on caching</td></tr>
 <tr><td>Static pages became dynamic after adding a slot</td><td>A custom storage adapter calls <code>fetch</code> with <code>cache: &#39;no-store&#39;</code></td><td>Read storage without going through the <code>fetch</code> wrapper Next.js installs, as <code>upstashStorage()</code> does</td></tr>
 </tbody>
@@ -599,6 +654,7 @@ catalogues, not for large or heavily queried data.</li>
 <li><input disabled="" type="checkbox"> <code>next build</code> succeeds, and routes that were static are still static.</li>
 <li><input disabled="" type="checkbox"> <code>/admin/plugins</code> shows the dashboard and requires a sign-in.</li>
 <li><input disabled="" type="checkbox"> A plugin installed from the dashboard serves its page without a rebuild.</li>
+<li><input disabled="" type="checkbox"> That page has the site&#39;s header, footer, font and brand colour.</li>
 <li><input disabled="" type="checkbox"> An address that no page owns behaves as it did before.</li>
 <li><input disabled="" type="checkbox"> The password and secret are set on the host and are not in git.</li>
 <li><input disabled="" type="checkbox"> On a serverless host, storage is a database adapter.</li>

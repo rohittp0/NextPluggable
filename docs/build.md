@@ -158,7 +158,7 @@ about the plugin comes from this file.
   "settings": [
     { "key": "greeting", "label": "Greeting", "type": "text", "default": "Hello there", "required": true },
     { "key": "showBadge", "label": "Show a badge on every page", "type": "toggle", "default": true },
-    { "key": "accent", "label": "Accent colour", "type": "color", "default": "#4f46e5" }
+    { "key": "accent", "label": "Accent colour", "type": "color", "placeholder": "Your site's colour", "help": "Leave empty to use your site's own colour." }
   ]
 }
 ```
@@ -268,10 +268,11 @@ import './style.css';
 interface Config {
   greeting: string;
   showBadge: boolean;
-  accent: string;
+  /** Empty unless the owner chose a colour. The site's own colour applies then. */
+  accent?: string;
 }
 
-const accent = (color: string) => ({ ['--hello-accent' as string]: color });
+const accent = (color?: string) => (color ? { ['--hello-accent' as string]: color } : undefined);
 
 /** The page at /hello. `data` comes from the server loader. */
 export function HelloPage({ data }: PageProps<{ visits: number }>) {
@@ -469,6 +470,11 @@ your components.
 
 ```css
 /* plugins/hello/src/style.css */
+.hello,
+.hello-badge {
+  /* The site's brand colour, unless the owner picked one in the settings. */
+  --hello-accent: var(--np-accent, #4f46e5);
+}
 .hello {
   max-width: 40rem;
   margin: 0 auto;
@@ -476,7 +482,7 @@ your components.
   color: var(--np-text, #0f172a);
 }
 .hello h1 {
-  color: var(--hello-accent, #4f46e5);
+  color: var(--hello-accent);
 }
 .hello-count {
   color: var(--np-muted, #5b6474);
@@ -487,19 +493,34 @@ your components.
   bottom: 1rem;
   padding: 0.5rem 0.9rem;
   border-radius: 999px;
-  background: var(--hello-accent, #4f46e5);
+  background: var(--hello-accent);
   color: #fff;
   text-decoration: none;
 }
 ```
 
+**Take your colours from the site.** A site describes its look with five CSS custom
+properties. Read them, always with a fallback, because a site may set none of them:
+
+| Property | Use it for |
+|---|---|
+| `--np-accent` | The site's brand colour: buttons, links, highlights |
+| `--np-text` | Body text |
+| `--np-muted` | Secondary text |
+| `--np-border` | Lines and input borders |
+| `--np-surface` | The background of cards and inputs |
+
+- **Do not give a colour setting a `default`.** Leave it empty, fall back to
+  `--np-accent` in CSS, and apply the owner's value only when there is one, as the
+  example does. A default would override every site's own colour.
+- Inherit the site's fonts. Do not set `font-family`.
 - **There is no style isolation.** Prefix every class with something of your own
   (`.hello-…`). Never style bare elements such as `h1` or `button` outside your own
   root class.
-- Inherit the site's fonts.
-- The dashboard sets `--np-text`, `--np-muted`, `--np-border` and `--np-surface`, and
-  a site may set them too. Read them with a fallback, as above, so the plugin looks
-  right on the site and in the dashboard.
+- Do not render a header or footer of your own. The site puts its own around your
+  page.
+- The dashboard sets `--np-text`, `--np-muted`, `--np-border` and `--np-surface` too,
+  so dashboard screens match it.
 
 ## 7. Build and commit
 
@@ -548,6 +569,8 @@ Check these before calling the plugin finished:
 - The page's content is in the HTML the server sends (`curl` the address). That is what
   search engines read.
 - The settings form makes sense to someone who has never seen the code.
+- The page takes on the site's colours and font, and sits between the site's own
+  header and footer.
 - The page still works after the owner changes its address in the dashboard.
 - Nothing in the browser console reports a hydration mismatch.
 
@@ -649,6 +672,9 @@ Read it before creating a plugin or changing a manifest.
 - The server entry must do no work and must not throw when it loads. It is loaded
   during the build and on install.
 - Prefix every CSS class with the plugin's own prefix. There is no style isolation.
+- Take colours from the site: read `--np-accent`, `--np-text`, `--np-muted`,
+  `--np-border` and `--np-surface`, each with a fallback. Never give a colour setting
+  a default, never set `font-family`, and never render a header or footer.
 - Settings labels and help text are read by non-technical site owners. Use plain words.
 ```
 

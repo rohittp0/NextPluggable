@@ -232,7 +232,7 @@ about the plugin comes from this file.</p>
   &quot;settings&quot;: [
     { &quot;key&quot;: &quot;greeting&quot;, &quot;label&quot;: &quot;Greeting&quot;, &quot;type&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Hello there&quot;, &quot;required&quot;: true },
     { &quot;key&quot;: &quot;showBadge&quot;, &quot;label&quot;: &quot;Show a badge on every page&quot;, &quot;type&quot;: &quot;toggle&quot;, &quot;default&quot;: true },
-    { &quot;key&quot;: &quot;accent&quot;, &quot;label&quot;: &quot;Accent colour&quot;, &quot;type&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#4f46e5&quot; }
+    { &quot;key&quot;: &quot;accent&quot;, &quot;label&quot;: &quot;Accent colour&quot;, &quot;type&quot;: &quot;color&quot;, &quot;placeholder&quot;: &quot;Your site's colour&quot;, &quot;help&quot;: &quot;Leave empty to use your site's own colour.&quot; }
   ]
 }"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-punctuation">{</span>
   <span class="hljs-attr">&quot;manifestVersion&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
@@ -254,7 +254,7 @@ about the plugin comes from this file.</p>
   <span class="hljs-attr">&quot;settings&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
     <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;key&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;greeting&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;label&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Greeting&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;text&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;default&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Hello there&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;required&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
     <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;key&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;showBadge&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;label&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Show a badge on every page&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;toggle&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;default&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
-    <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;key&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;accent&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;label&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Accent colour&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;color&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;default&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;#4f46e5&quot;</span> <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;key&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;accent&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;label&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Accent colour&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;color&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;placeholder&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Your site&#x27;s colour&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;help&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Leave empty to use your site&#x27;s own colour.&quot;</span> <span class="hljs-punctuation">}</span>
   <span class="hljs-punctuation">]</span>
 <span class="hljs-punctuation">}</span></code></pre></div>
 <h3 id="top-level-fields"><a class="anchor" href="#top-level-fields" aria-label="Link to this section">#</a>Top-level fields</h3>
@@ -348,10 +348,11 @@ import './style.css';
 interface Config {
   greeting: string;
   showBadge: boolean;
-  accent: string;
+  /** Empty unless the owner chose a colour. The site's own colour applies then. */
+  accent?: string;
 }
 
-const accent = (color: string) =&gt; ({ ['--hello-accent' as string]: color });
+const accent = (color?: string) =&gt; (color ? { ['--hello-accent' as string]: color } : undefined);
 
 /** The page at /hello. `data` comes from the server loader. */
 export function HelloPage({ data }: PageProps&lt;{ visits: number }&gt;) {
@@ -408,10 +409,11 @@ export function HelloStats() {
 <span class="hljs-keyword">interface</span> <span class="hljs-title class_">Config</span> {
   <span class="hljs-attr">greeting</span>: <span class="hljs-built_in">string</span>;
   <span class="hljs-attr">showBadge</span>: <span class="hljs-built_in">boolean</span>;
-  <span class="hljs-attr">accent</span>: <span class="hljs-built_in">string</span>;
+  <span class="hljs-comment">/** Empty unless the owner chose a colour. The site&#x27;s own colour applies then. */</span>
+  <span class="hljs-attr">accent</span>?: <span class="hljs-built_in">string</span>;
 }
 
-<span class="hljs-keyword">const</span> <span class="hljs-title function_">accent</span> = (<span class="hljs-params"><span class="hljs-attr">color</span>: <span class="hljs-built_in">string</span></span>) =&gt; ({ [<span class="hljs-string">&#x27;--hello-accent&#x27;</span> <span class="hljs-keyword">as</span> <span class="hljs-built_in">string</span>]: color });
+<span class="hljs-keyword">const</span> <span class="hljs-title function_">accent</span> = (<span class="hljs-params"><span class="hljs-attr">color</span>?: <span class="hljs-built_in">string</span></span>) =&gt; (color ? { [<span class="hljs-string">&#x27;--hello-accent&#x27;</span> <span class="hljs-keyword">as</span> <span class="hljs-built_in">string</span>]: color } : <span class="hljs-literal">undefined</span>);
 
 <span class="hljs-comment">/** The page at /hello. `data` comes from the server loader. */</span>
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">HelloPage</span>(<span class="hljs-params">{ data }: <span class="hljs-title class_">PageProps</span>&lt;{ visits: <span class="hljs-built_in">number</span> }&gt;</span>) {
@@ -621,6 +623,11 @@ under <code>api</code> looks like <code>GET /path</code>.</p>
 <p>Import CSS from the client entry. It is bundled into <code>dist/style.css</code> and loaded with
 your components.</p>
 <div class="code"><div class="code-head"><span>css</span><button type="button" class="code-copy" data-copy="/* plugins/hello/src/style.css */
+.hello,
+.hello-badge {
+  /* The site's brand colour, unless the owner picked one in the settings. */
+  --hello-accent: var(--np-accent, #4f46e5);
+}
 .hello {
   max-width: 40rem;
   margin: 0 auto;
@@ -628,7 +635,7 @@ your components.</p>
   color: var(--np-text, #0f172a);
 }
 .hello h1 {
-  color: var(--hello-accent, #4f46e5);
+  color: var(--hello-accent);
 }
 .hello-count {
   color: var(--np-muted, #5b6474);
@@ -639,10 +646,15 @@ your components.</p>
   bottom: 1rem;
   padding: 0.5rem 0.9rem;
   border-radius: 999px;
-  background: var(--hello-accent, #4f46e5);
+  background: var(--hello-accent);
   color: #fff;
   text-decoration: none;
 }"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">/* plugins/hello/src/style.css */</span>
+<span class="hljs-selector-class">.hello</span>,
+<span class="hljs-selector-class">.hello-badge</span> {
+  <span class="hljs-comment">/* The site&#x27;s brand colour, unless the owner picked one in the settings. */</span>
+  <span class="hljs-attr">--hello-accent</span>: <span class="hljs-built_in">var</span>(--np-accent, <span class="hljs-number">#4f46e5</span>);
+}
 <span class="hljs-selector-class">.hello</span> {
   <span class="hljs-attribute">max-width</span>: <span class="hljs-number">40rem</span>;
   <span class="hljs-attribute">margin</span>: <span class="hljs-number">0</span> auto;
@@ -650,7 +662,7 @@ your components.</p>
   <span class="hljs-attribute">color</span>: <span class="hljs-built_in">var</span>(--np-text, <span class="hljs-number">#0f172a</span>);
 }
 <span class="hljs-selector-class">.hello</span> <span class="hljs-selector-tag">h1</span> {
-  <span class="hljs-attribute">color</span>: <span class="hljs-built_in">var</span>(--hello-accent, <span class="hljs-number">#4f46e5</span>);
+  <span class="hljs-attribute">color</span>: <span class="hljs-built_in">var</span>(--hello-accent);
 }
 <span class="hljs-selector-class">.hello-count</span> {
   <span class="hljs-attribute">color</span>: <span class="hljs-built_in">var</span>(--np-muted, <span class="hljs-number">#5b6474</span>);
@@ -661,18 +673,34 @@ your components.</p>
   <span class="hljs-attribute">bottom</span>: <span class="hljs-number">1rem</span>;
   <span class="hljs-attribute">padding</span>: <span class="hljs-number">0.5rem</span> <span class="hljs-number">0.9rem</span>;
   <span class="hljs-attribute">border-radius</span>: <span class="hljs-number">999px</span>;
-  <span class="hljs-attribute">background</span>: <span class="hljs-built_in">var</span>(--hello-accent, <span class="hljs-number">#4f46e5</span>);
+  <span class="hljs-attribute">background</span>: <span class="hljs-built_in">var</span>(--hello-accent);
   <span class="hljs-attribute">color</span>: <span class="hljs-number">#fff</span>;
   <span class="hljs-attribute">text-decoration</span>: none;
 }</code></pre></div>
+<p><strong>Take your colours from the site.</strong> A site describes its look with five CSS custom
+properties. Read them, always with a fallback, because a site may set none of them:</p>
+<div class="table"><table>
+<thead><tr><th>Property</th><th>Use it for</th></tr></thead>
+<tbody>
+<tr><td><code>--np-accent</code></td><td>The site&#39;s brand colour: buttons, links, highlights</td></tr>
+<tr><td><code>--np-text</code></td><td>Body text</td></tr>
+<tr><td><code>--np-muted</code></td><td>Secondary text</td></tr>
+<tr><td><code>--np-border</code></td><td>Lines and input borders</td></tr>
+<tr><td><code>--np-surface</code></td><td>The background of cards and inputs</td></tr>
+</tbody>
+</table></div>
 <ul>
+<li><strong>Do not give a colour setting a <code>default</code>.</strong> Leave it empty, fall back to
+<code>--np-accent</code> in CSS, and apply the owner&#39;s value only when there is one, as the
+example does. A default would override every site&#39;s own colour.</li>
+<li>Inherit the site&#39;s fonts. Do not set <code>font-family</code>.</li>
 <li><strong>There is no style isolation.</strong> Prefix every class with something of your own
 (<code>.hello-…</code>). Never style bare elements such as <code>h1</code> or <code>button</code> outside your own
 root class.</li>
-<li>Inherit the site&#39;s fonts.</li>
-<li>The dashboard sets <code>--np-text</code>, <code>--np-muted</code>, <code>--np-border</code> and <code>--np-surface</code>, and
-a site may set them too. Read them with a fallback, as above, so the plugin looks
-right on the site and in the dashboard.</li>
+<li>Do not render a header or footer of your own. The site puts its own around your
+page.</li>
+<li>The dashboard sets <code>--np-text</code>, <code>--np-muted</code>, <code>--np-border</code> and <code>--np-surface</code> too,
+so dashboard screens match it.</li>
 </ul>
 <h2 id="7-build-and-commit"><a class="anchor" href="#7-build-and-commit" aria-label="Link to this section">#</a>7. Build and commit</h2>
 <div class="code"><div class="code-head"><span>bash</span><button type="button" class="code-copy" data-copy="npm run build
@@ -714,6 +742,8 @@ with <code>next dev</code>.</li>
 <li>The page&#39;s content is in the HTML the server sends (<code>curl</code> the address). That is what
 search engines read.</li>
 <li>The settings form makes sense to someone who has never seen the code.</li>
+<li>The page takes on the site&#39;s colours and font, and sits between the site&#39;s own
+header and footer.</li>
 <li>The page still works after the owner changes its address in the dashboard.</li>
 <li>Nothing in the browser console reports a hydration mismatch.</li>
 </ul>
@@ -820,6 +850,9 @@ Read it before creating a plugin or changing a manifest.
 - The server entry must do no work and must not throw when it loads. It is loaded
   during the build and on install.
 - Prefix every CSS class with the plugin's own prefix. There is no style isolation.
+- Take colours from the site: read `--np-accent`, `--np-text`, `--np-muted`,
+  `--np-border` and `--np-surface`, each with a fallback. Never give a colour setting
+  a default, never set `font-family`, and never render a header or footer.
 - Settings labels and help text are read by non-technical site owners. Use plain words."><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-section">## NextPluggable plugins</span>
 
 This repository is a NextPluggable plugin source. Sites install plugins straight from
@@ -863,6 +896,9 @@ Read it before creating a plugin or changing a manifest.
 <span class="hljs-bullet">-</span> The server entry must do no work and must not throw when it loads. It is loaded
   during the build and on install.
 <span class="hljs-bullet">-</span> Prefix every CSS class with the plugin&#x27;s own prefix. There is no style isolation.
+<span class="hljs-bullet">-</span> Take colours from the site: read <span class="hljs-code">`--np-accent`</span>, <span class="hljs-code">`--np-text`</span>, <span class="hljs-code">`--np-muted`</span>,
+  <span class="hljs-code">`--np-border`</span> and <span class="hljs-code">`--np-surface`</span>, each with a fallback. Never give a colour setting
+  a default, never set <span class="hljs-code">`font-family`</span>, and never render a header or footer.
 <span class="hljs-bullet">-</span> Settings labels and help text are read by non-technical site owners. Use plain words.</code></pre></div>
 <h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2>
 <div class="table"><table>
