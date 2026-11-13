@@ -31,11 +31,15 @@ export interface PluginContext<C = Record<string, unknown>> {
   log(...args: unknown[]): void;
 }
 
+/**
+ * What a page loader receives. There is deliberately no query string here:
+ * sites cache plugin pages, and a cached page cannot depend on it. Use address
+ * parameters (`/shop/:slug`, `/blog/page/:n`) for content search engines should
+ * see, and `useQuery()` in the browser for filters and searches.
+ */
 export interface PageContext<C = Record<string, unknown>> extends PluginContext<C> {
   path: string;
   params: Record<string, string>;
-  /** Only populated when the page sets `"searchParams": true` in the manifest. */
-  searchParams: Record<string, string>;
 }
 
 export interface PageMetadata {

@@ -2,7 +2,7 @@
   "name": "nextpluggable",
   "version": "0.1.0",
   "description": "WordPress-style plugins for Next.js: a dashboard where site owners install full-featured plugins from GitHub repositories, with no rebuild.",
-  "license": "MIT",
+  "engines": { "node": ">=20.16" },
   "type": "module",
   "bin": { "nextpluggable": "./bin/nextpluggable.js" },
   "exports": {

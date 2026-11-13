@@ -1,10 +1,14 @@
 // End-to-end test: drives the example site in a real browser the way a site
 // owner would, against a mock GitHub API.
 //
-//   pnpm build && pnpm e2e            (add --no-build to reuse the last `next build`)
+//   pnpm build && pnpm e2e
+//
+// Runs against the example as committed (plugin pages rendered per request).
+// With --cached it first switches on the optional page caching in the example's
+// catch-all route, so that mode is exercised too; the file is restored afterwards.
 //
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
 import os from 'node:os';
@@ -16,6 +20,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const site = path.join(root, 'examples/site');
 const nextBin = path.join(site, 'node_modules/next/dist/bin/next');
 const PASSWORD = 'e2e-password';
+const cached = process.argv.includes('--cached');
+const routeFile = path.join(site, 'app/[...slug]/page.tsx');
+const routeSource = await readFile(routeFile, 'utf8');
 
 let chromium;
 try {
@@ -52,7 +59,7 @@ const expect = (cond, message) => {
 
 const github = await startMockGitHub(root);
 const dataDir = await mkdtemp(path.join(os.tmpdir(), 'nextpluggable-e2e-'));
-const port = await freePort();
+const port = Number(process.env.E2E_PORT) || (await freePort());
 const base = `http://localhost:${port}`;
 const env = {
   ...process.env,
@@ -61,15 +68,20 @@ const env = {
   NEXTPLUGGABLE_SECRET: 'e2e-secret-0123456789abcdef',
   NEXTPLUGGABLE_DATA_DIR: dataDir,
   NEXTPLUGGABLE_GITHUB_API_URL: github.url,
+  NEXTPLUGGABLE_ALLOW_LOCAL_SOURCES: '1', // for the folder source used by the crash test
   NEXT_PUBLIC_SITE_URL: base,
   NEXT_TELEMETRY_DISABLED: '1',
 };
 
-if (!process.argv.includes('--no-build')) {
-  console.log('Building the example site…');
-  const built = spawnSync(process.execPath, [nextBin, 'build'], { cwd: site, env, stdio: ['ignore', 'ignore', 'inherit'] });
-  if (built.status !== 0) process.exit(1);
+console.log(`Building the example site (${cached ? 'plugin pages cached' : 'plugin pages rendered per request'})…`);
+if (cached) {
+  const enabled = routeSource.replace('// export const generateStaticParams', 'export const generateStaticParams').replace('// export const revalidate', 'export const revalidate');
+  if (enabled === routeSource) throw new Error('Could not find the caching lines to switch on in the example route.');
+  await writeFile(routeFile, enabled);
 }
+const built = spawnSync(process.execPath, [nextBin, 'build'], { cwd: site, env, stdio: ['ignore', 'ignore', 'inherit'] });
+await writeFile(routeFile, routeSource);
+if (built.status !== 0) process.exit(1);
 
 // Run Next.js directly (not through npx) in its own process group, so teardown can stop every process it starts.
 const server = spawn(process.execPath, [nextBin, 'start', '-p', String(port)], { cwd: site, env, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
@@ -146,7 +158,7 @@ try {
     await page.waitForSelector('#np-source-error:has-text("does not look like a GitHub repository address")');
     await page.fill('#np-source-url', '/etc');
     await page.click('button:has-text("Connect source")');
-    await page.waitForSelector('#np-source-error:has-text("does not look like a GitHub repository address")');
+    await page.waitForSelector('#np-source-error:has-text("does not look like a plugin source")');
   });
   await step('a public GitHub repository connects from its browser address', async () => {
     await page.fill('#np-source-url', 'https://github.com/acme/plugins');
@@ -215,13 +227,14 @@ try {
     ])
       expect(body.includes(needle), `missing from server HTML: ${needle}`);
   });
-  await step('the page is cached like a static page, yet was live the moment it was installed', async () => {
-    // The address returned a (cached) 404 before the install; the install had to invalidate that.
-    const first = await fetch(`${base}/emi-calculator`);
-    const second = await fetch(`${base}/emi-calculator`);
-    expect(first.status === 200 && second.status === 200, 'page should be live');
-    expect(second.headers.get('x-nextjs-cache') === 'HIT', `expected a cache hit, got ${second.headers.get('x-nextjs-cache')}`);
-  });
+  if (cached)
+    await step('the page is cached like a static page, yet was live the moment it was installed', async () => {
+      // The address returned a (cached) 404 before the install; the install had to invalidate that.
+      const first = await fetch(`${base}/emi-calculator`);
+      const second = await fetch(`${base}/emi-calculator`);
+      expect(first.status === 200 && second.status === 200, 'page should be live');
+      expect(second.headers.get('x-nextjs-cache') === 'HIT', `expected a cache hit, got ${second.headers.get('x-nextjs-cache')}`);
+    });
   await step('it hydrates and stays interactive, with no errors', async () => {
     const pub = await context.newPage();
     watch(pub, 'emi page');
@@ -328,6 +341,183 @@ try {
     const stored = await readFile(path.join(dataDir, 'installs.json'), 'utf8');
     expect(!stored.includes('secret-path') && stored.includes('enc:v1:'), 'a secret must be encrypted at rest');
     expect(!(await html('/contact')).body.includes('secret-path'), 'a secret must never reach public pages');
+  });
+
+  console.log('\nPages with parameters, redirects and query strings');
+  const kbDir = await mkdtemp(path.join(os.tmpdir(), 'nextpluggable-kb-'));
+  await step('a plugin serves many addresses from one page, each with its own SEO data', async () => {
+    const { buildPlugin } = await import('../packages/plugin/dist/build.js');
+    const { mkdir, writeFile } = await import('node:fs/promises');
+    await mkdir(path.join(kbDir, 'src'), { recursive: true });
+    await writeFile(
+      path.join(kbDir, 'plugin.json'),
+      JSON.stringify({
+        manifestVersion: 1,
+        id: 'kb-demo',
+        name: 'Help Articles',
+        version: '1.0.0',
+        pages: [
+          { id: 'article', path: '/kb/:slug', component: 'Article', title: 'Article' },
+          { id: 'search', path: '/kb-search', component: 'Search', title: 'Search' },
+        ],
+      }),
+    );
+    await writeFile(
+      path.join(kbDir, 'src/client.js'),
+      `import { createElement as h } from 'react';
+import { useQuery } from '@nextpluggable/plugin';
+export function Article({ data, params }) { return h('article', null, h('h1', null, data.title), h('p', { id: 'kb-body' }, data.body), h('small', { id: 'kb-slug' }, params.slug)); }
+export function Search() { return h('p', { id: 'kb-q' }, 'You searched for: ' + (useQuery().get('q') ?? '')); }`,
+    );
+    await writeFile(
+      path.join(kbDir, 'src/server.js'),
+      `const ARTICLES = { 'getting-started': { title: 'Getting started', body: 'Welcome aboard.' }, 'secret-draft': { title: 'Draft', body: 'Not public yet.', draft: true } };
+export default {
+  pages: {
+    article({ params }) {
+      if (params.slug === 'old-intro') return { redirect: '/kb/getting-started' };
+      const article = ARTICLES[params.slug];
+      if (!article) return { notFound: true };
+      return { data: article, metadata: { title: article.title, description: article.body, noindex: Boolean(article.draft), image: '/og/' + params.slug + '.png' } };
+    },
+  },
+};`,
+    );
+    await buildPlugin(kbDir);
+    await page.goto(`${dash}/sources`);
+    await page.fill('#np-source-url', kbDir);
+    await page.click('button:has-text("Connect source")');
+    await toast('1 plugin found');
+    await page.goto(`${dash}/add`);
+    await page.click('li:has-text("Help Articles") button:has-text("Install")');
+    await page.click('[role=dialog] button:has-text("Install")');
+    await page.waitForURL('**/plugin/kb-demo');
+
+    const article = await html('/kb/getting-started');
+    expect(article.status === 200, `article status ${article.status}`);
+    for (const needle of ['<h1>Getting started</h1>', 'Welcome aboard.', '<title>Getting started · Harbor Lending</title>', `property="og:image" content="${base}/og/getting-started.png"`, `rel="canonical" href="${base}/kb/getting-started"`])
+      expect(article.body.includes(needle), `missing from the article HTML: ${needle}`);
+    expect(!/name="robots" content="noindex/.test(article.body), 'a public article must be indexable');
+    const draft = await html('/kb/secret-draft');
+    expect(draft.status === 200 && /name="robots" content="noindex, nofollow"/.test(draft.body), 'a page marked noindex must say so');
+  });
+  await step('a loader can answer “not found” or redirect, with real HTTP statuses', async () => {
+    expect((await html('/kb/does-not-exist')).status === 404, 'unknown article should be a real 404');
+    const res = await fetch(`${base}/kb/old-intro`, { redirect: 'manual' });
+    expect([307, 308].includes(res.status), `redirect status ${res.status}`);
+    // Next.js repeats the Location header on the first, uncached response; every copy must point to the same place.
+    const targets = new Set(res.headers.get('location').split(',').map((v) => new URL(v.trim(), base).pathname));
+    expect(targets.size === 1 && targets.has('/kb/getting-started'), `redirect target ${res.headers.get('location')}`);
+  });
+  await step('the query string is only ever read in the browser', async () => {
+    if (cached) {
+      await fetch(`${base}/kb/getting-started`);
+      expect((await fetch(`${base}/kb/getting-started`)).headers.get('x-nextjs-cache') === 'HIT', 'article should be served from the cache');
+    }
+    // What the plugin renders on the server never includes the query, cached or not, so one
+    // visitor's query cannot be shown to another. (In cached mode Next.js itself still embeds
+    // the first request's URL in the page's inline data; that is outside the plugin runtime.)
+    const search = await html('/kb-search?q=hello');
+    expect(search.status === 200 && search.body.includes('<title>Search · Harbor Lending</title>'), `search page status ${search.status}`);
+    expect(search.body.includes('You searched for: <') && !search.body.includes('You searched for: hello'), 'the component is server-rendered with an empty query');
+    const next = await html('/kb-search?q=world');
+    expect(next.body.includes('You searched for: <') && !/You searched for: (hello|world)/.test(next.body), 'the next visitor gets the same neutral markup');
+    const tab = await visitor.newPage();
+    watch(tab, 'kb page');
+    await tab.goto(`${base}/kb/getting-started`, { waitUntil: 'load' });
+    expect((await tab.textContent('#kb-slug')) === 'getting-started', 'params reach the component after hydration');
+    await tab.goto(`${base}/kb-search?q=hello`, { waitUntil: 'load' });
+    await tab.waitForSelector('#kb-q:has-text("You searched for: hello")');
+    await tab.goto(`${base}/kb-search?q=world`, { waitUntil: 'load' });
+    await tab.waitForSelector('#kb-q:has-text("You searched for: world")');
+    await tab.close();
+    // Clean up.
+    await page.click('role=tab[name="About"]');
+    await page.click('button:has-text("Remove plugin")');
+    await page.click('[role=dialog] button:has-text("Remove")');
+    await toast('Help Articles was removed.');
+    await page.goto(`${dash}/sources`);
+    await page.click(`li:has-text("${path.basename(kbDir)}") button:has-text("Disconnect")`);
+    await rm(kbDir, { recursive: true, force: true });
+  });
+
+  console.log('\nA plugin that crashes');
+  const brokenDir = await mkdtemp(path.join(os.tmpdir(), 'nextpluggable-broken-'));
+  await step('a crashing plugin cannot take the site down', async () => {
+    const { buildPlugin } = await import('../packages/plugin/dist/build.js');
+    const { mkdir, writeFile } = await import('node:fs/promises');
+    await mkdir(path.join(brokenDir, 'src'), { recursive: true });
+    await writeFile(
+      path.join(brokenDir, 'plugin.json'),
+      JSON.stringify({
+        manifestVersion: 1,
+        id: 'broken-plugin',
+        name: 'Broken Plugin',
+        version: '1.0.0',
+        pages: [{ id: 'main', path: '/broken', component: 'Page', title: 'Broken' }],
+        slots: [
+          { slot: 'body.end', component: 'Widget' },
+          { slot: 'footer', component: 'ServerShy' },
+        ],
+      }),
+    );
+    await writeFile(
+      path.join(brokenDir, 'src/client.js'),
+      `import { createElement } from 'react';
+export function Page() { throw new Error('page exploded'); }
+export function Widget() { throw new Error('widget exploded'); }
+// Fails on the server only, the most common plugin mistake: touching browser globals while rendering.
+export function ServerShy() { return createElement('span', { id: 'server-shy' }, 'width ' + window.innerWidth); }`,
+    );
+    await buildPlugin(brokenDir);
+
+    await page.goto(`${dash}/sources`);
+    await page.fill('#np-source-url', brokenDir);
+    await page.click('button:has-text("Connect source")');
+    await toast('1 plugin found');
+    await page.goto(`${dash}/add`);
+    await page.click('li:has-text("Broken Plugin") button:has-text("Install")');
+    await page.click('[role=dialog] button:has-text("Install")');
+    await page.waitForURL('**/plugin/broken-plugin');
+
+    // Its widget sits in the layout of every page, and throws.
+    const home = await html('/');
+    expect(home.status === 200 && home.body.includes('Home loans, explained plainly.'), 'the home page must still render on the server');
+    expect(home.body.includes('npenq-fab'), 'a healthy widget in the same slot must still be server-rendered');
+    const calc = await html('/loan-calculator');
+    expect(calc.status === 200 && calc.body.includes('<h1>Home Loan Calculator</h1>'), 'other plugins must still render');
+
+    // A fresh browser session, not watched for console errors: the crash is expected to be logged there.
+    const session = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const tab = await session.newPage();
+    tab.setDefaultTimeout(10_000);
+    const uncaught = [];
+    tab.on('pageerror', (e) => uncaught.push(e.message));
+    await tab.goto(base, { waitUntil: 'load' });
+    // A plugin that only failed on the server still works in the browser.
+    await tab.waitForSelector('#server-shy:has-text("width 1280")');
+    await tab.waitForSelector('a.npenq-fab'); // the healthy widget sharing the slot is unaffected
+    await tab.click('nav >> text=About'); // the site's own navigation still works
+    await tab.waitForSelector('h1:has-text("About")');
+    await tab.goto(`${base}/loan-calculator`, { waitUntil: 'load' });
+    await tab.waitForSelector('#server-shy');
+    await tab.fill('input[type=number] >> nth=1', '10');
+    expect((await tab.textContent('[data-testid=emi]')) === '₹24,126', 'other plugins must stay interactive');
+    await tab.goto(`${base}/broken`, { waitUntil: 'load' });
+    await tab.waitForSelector('text=This page could not be displayed');
+    expect((await tab.locator('header.site-header').count()) === 1, 'the site layout must survive a crashing plugin page');
+    expect(uncaught.length === 0, `uncaught errors reached the page: ${uncaught.join(' | ')}`);
+    await session.close();
+  });
+  await step('the owner can remove the crashing plugin from the dashboard', async () => {
+    await page.click('role=tab[name="About"]');
+    await page.click('button:has-text("Remove plugin")');
+    await page.click('[role=dialog] button:has-text("Remove")');
+    await toast('Broken Plugin was removed.');
+    expect((await html('/broken')).status === 404, 'removed page');
+    await page.goto(`${dash}/sources`);
+    await page.click(`li:has-text("${path.basename(brokenDir)}") button:has-text("Disconnect")`);
+    await rm(brokenDir, { recursive: true, force: true });
   });
 
   console.log('\nPause and remove');

@@ -37,6 +37,8 @@ export function createPluginApi(apiBase: string): PluginApi {
   };
 }
 
+const subscribeToNothing = () => () => {};
+
 export const hostRuntime: HostRuntime = {
   usePluginConfig<T>() {
     return useRuntime().config as T;
@@ -62,7 +64,19 @@ export const hostRuntime: HostRuntime = {
     );
   },
   useQuery() {
-    return new URLSearchParams(useSearchParams()?.toString() ?? '');
+    // The query string must never reach server-rendered HTML: plugin pages may be cached and
+    // served to every visitor, and a query can carry private values. So it is not read on the
+    // server at all, stays empty while the browser hydrates (to match that HTML), and becomes
+    // available on the first update after.
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- the branch is fixed per environment
+    const live = typeof window === 'undefined' ? null : useSearchParams();
+    const hydrated = React.useSyncExternalStore(
+      subscribeToNothing,
+      () => true,
+      () => false,
+    );
+    const search = hydrated && live ? live.toString() : '';
+    return React.useMemo(() => new URLSearchParams(search), [search]);
   },
   Link(props: LinkProps) {
     return <NextLink {...props} />;

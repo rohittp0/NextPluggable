@@ -11,11 +11,9 @@ import { PluginGoneError } from '../errors.js';
 import type { InstallRecord } from '../core/types.js';
 
 type RouteParams = Promise<Record<string, string | string[] | undefined>>;
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export interface PluginPageProps {
   params: RouteParams;
-  searchParams?: SearchParams;
 }
 
 /** The pathname a catch-all route was called with, whatever the segment is named. */
@@ -26,27 +24,18 @@ async function pathnameOf(params: RouteParams): Promise<string> {
   return normalizePathname(typeof values[0] === 'string' ? values[0] : '/');
 }
 
-function flatten(input: Record<string, string | string[] | undefined>): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(input)) {
-    const first = Array.isArray(v) ? v[0] : v;
-    if (first !== undefined) out[k] = first;
-  }
-  return out;
-}
-
 export function pluginInfo(cfg: ResolvedConfig, install: InstallRecord, page?: PluginInfo['page']): PluginInfo {
   return { id: install.id, version: install.manifest.version, apiBase: `${cfg.apiPath}/p/${install.id}`, paths: effectivePaths(install), page };
 }
 
 export function createPluginPage(getConfig: () => ResolvedConfig) {
   // `cache` de-duplicates the work between generateMetadata and the page within one request.
-  const run = cache(async (pathname: string, search: string) => {
+  const run = cache(async (pathname: string) => {
     const attempt = async () => {
-      const match = findPage(await getInstalledPlugins(getConfig()), pathname);
-      if (!match) return null;
       const cfg = getConfig();
-      const result = await runPageLoader(cfg, match.install, match.page.id, { path: pathname, params: match.params, searchParams: JSON.parse(search) as Record<string, string> });
+      const match = findPage(await getInstalledPlugins(cfg), pathname);
+      if (!match) return null;
+      const result = await runPageLoader(cfg, match.install, match.page.id, { path: pathname, params: match.params });
       return { pathname, match, result, assets: await prepareClient(cfg, match.install) };
     };
     try {
@@ -64,15 +53,9 @@ export function createPluginPage(getConfig: () => ResolvedConfig) {
     }
   });
 
-  /** Resolve the request once; generateMetadata and the page share the result. */
-  async function resolveRequest(props: PluginPageProps) {
-    const pathname = await pathnameOf(props.params);
-    const match = findPage(await getInstalledPlugins(getConfig()), pathname);
-    if (!match) return null;
-    // Reading the query string opts a page out of caching, so only do it for pages that asked for it.
-    const search = match.page.searchParams && props.searchParams ? flatten(await props.searchParams) : {};
-    return run(pathname, JSON.stringify(search));
-  }
+  // Only `params` is read, never the query string, cookies or headers, so this
+  // route can be statically cached as well as rendered per request.
+  const resolveRequest = async (props: PluginPageProps) => run(await pathnameOf(props.params));
 
   async function generatePluginMetadata(props: PluginPageProps): Promise<Metadata> {
     const loaded = await resolveRequest(props);

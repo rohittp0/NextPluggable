@@ -146,7 +146,7 @@ export async function runPageLoader(
   cfg: ResolvedConfig,
   install: InstallRecord,
   pageId: string,
-  input: { path: string; params: Record<string, string>; searchParams: Record<string, string> },
+  input: { path: string; params: Record<string, string> },
 ): Promise<PageResult> {
   const server = await loadServer(cfg, install);
   const loader = server?.pages?.[pageId];

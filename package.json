@@ -10,7 +10,7 @@
     "build:plugins": "pnpm --filter \"./plugins/*\" build",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
-    "e2e": "node e2e/run.mjs",
+    "e2e": "node e2e/run.mjs && node e2e/run.mjs --cached",
     "dev": "pnpm --filter example-site dev"
   },
   "devDependencies": {

@@ -62,6 +62,22 @@ describe('nextpluggable init', () => {
     expect(await read(dir, 'app/[[...path]]/page.tsx')).toBe('// cms');
   });
 
+  it('generates an uncached catch-all with caching as a commented opt-in', async () => {
+    const dir = await project({ 'app/layout.tsx': '', 'tsconfig.json': '{}' });
+    await init(dir);
+    const route = await read(dir, 'app/[...slug]/page.tsx');
+    expect(route).toContain('export default np.PluginPage;');
+    expect(route).toContain('// export const generateStaticParams = async () => [];');
+    expect(route).toContain('// export const revalidate = 3600;');
+    expect(route).not.toMatch(/^export const (generateStaticParams|revalidate|dynamic)/m);
+    expect(route).not.toContain('force-static');
+  });
+
+  it('points out a root loading file, which turns unknown addresses into soft 404s', async () => {
+    const dir = await project({ 'app/layout.tsx': '', 'app/loading.tsx': '', 'tsconfig.json': '{}', '.gitignore': '.env*\n' });
+    expect((await init(dir)).notes.join(' ')).toContain('root loading file');
+  });
+
   it('warns when .env.local might be committed, and explains a missing app directory', async () => {
     const dir = await project({ 'app/layout.tsx': '', '.gitignore': 'node_modules\n' });
     expect((await init(dir)).notes.join(' ')).toContain('.env.local is not committed');

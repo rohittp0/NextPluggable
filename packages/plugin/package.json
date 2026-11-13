@@ -2,7 +2,7 @@
   "name": "@nextpluggable/plugin",
   "version": "0.1.0",
   "description": "SDK and build tool for writing NextPluggable plugins",
-  "license": "MIT",
+  "engines": { "node": ">=20.16" },
   "type": "module",
   "bin": { "nextpluggable-plugin": "./bin/nextpluggable-plugin.js" },
   "exports": {

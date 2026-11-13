@@ -8,3 +8,6 @@ packages/*/dist/
 next-env.d.ts
 e2e/.tmp/
 .DS_Store
+
+# Written by `next dev` (Next.js's own notes for coding agents)
+examples/site/AGENTS.md

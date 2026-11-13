@@ -63,8 +63,6 @@ export interface PluginPage {
   description?: string;
   /** Let the site owner change the address from the dashboard. Default true for static paths. */
   configurablePath?: boolean;
-  /** Set when the page reads the query string on the server (opts the page out of caching). */
-  searchParams?: boolean;
 }
 
 export interface PluginSlotContribution {
@@ -241,8 +239,7 @@ export function validateManifest(input: unknown): PluginManifest {
           p.push(`${at}.component must be the name of an exported component`);
         if (typeof page.title !== 'string' || !page.title.trim()) p.push(`${at}.title is required`);
         if (page.description !== undefined && typeof page.description !== 'string') p.push(`${at}.description must be text`);
-        for (const k of ['configurablePath', 'searchParams'] as const)
-          if (page[k] !== undefined && typeof page[k] !== 'boolean') p.push(`${at}.${k} must be true or false`);
+        if (page.configurablePath !== undefined && typeof page.configurablePath !== 'boolean') p.push(`${at}.configurablePath must be true or false`);
       });
   }
 

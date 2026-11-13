@@ -81,8 +81,10 @@ export function useNavigation(): Navigation {
 }
 
 /**
- * The page's query string. Reading it means this part of the page is rendered
- * in the browser on cached pages, so prefer a server loader for SEO-critical content.
+ * The page's query string, for filters, searches and the like. It is only ever
+ * known in the browser: it is empty during server rendering and on the first
+ * render there, then fills in. (Pages may be cached and shared between
+ * visitors, so the server never puts a query string into HTML.)
  */
 export function useQuery(): URLSearchParams {
   return host().useQuery();

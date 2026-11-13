@@ -15,6 +15,7 @@ import * as ReactDOM from 'react-dom';
 import * as jsxRuntime from 'react/jsx-runtime';
 import type { PluginInfo } from '@nextpluggable/plugin';
 import { hostRuntime, PluginRuntimeContext } from './host-runtime.js';
+import { ClientOnly, createGuardedRuntime, type GuardedRuntime } from './ssr-guard.js';
 
 type PluginModule = Record<string, unknown>;
 type Factory = (require: (name: string) => unknown, module: { exports: PluginModule }, exports: PluginModule) => void;
@@ -32,11 +33,14 @@ function hostRequire(name: string): unknown {
   throw new Error(`A plugin tried to load "${name}", which this site does not provide. Bundle it into the plugin instead.`);
 }
 
-function instantiate(factory: Factory): PluginModule {
+function instantiate(factory: Factory, require: (name: string) => unknown = hostRequire): PluginModule {
   const module = { exports: {} as PluginModule };
-  factory(hostRequire, module, module.exports);
+  factory(require, module, module.exports);
   return module.exports;
 }
+
+/** Server only: the crash guard each plugin bundle was instantiated with. */
+const guards = new Map<string, GuardedRuntime>();
 
 function settled<T>(value: T): Tracked<T> {
   const p = Promise.resolve(value) as Tracked<T>;
@@ -86,15 +90,20 @@ function loadModule(key: string, src: string): Tracked<PluginModule> {
   if (typeof window === 'undefined') {
     const state = (globalThis as Record<symbol, { ssrCode?: Map<string, string> } | undefined>)[Symbol.for('nextpluggable.state')];
     const code = state?.ssrCode?.get(key);
-    try {
-      if (code === undefined) throw new Error(`Plugin bundle ${key} was not prepared for server rendering.`);
-      tracked = settled(instantiate(new Function('require', 'module', 'exports', `${code}\n//# sourceURL=nextpluggable-plugin:///${key}/client.js`) as Factory));
-    } catch (e) {
-      tracked = failed(e);
-    }
     // Keep only the newest build of each plugin in memory.
     const prefix = `${key.split('@')[0]}@`;
-    for (const k of modules.keys()) if (k.startsWith(prefix)) modules.delete(k);
+    for (const k of modules.keys()) if (k.startsWith(prefix)) (modules.delete(k), guards.delete(k));
+    try {
+      if (code === undefined) throw new Error(`Plugin bundle ${key} was not prepared for server rendering.`);
+      // On the server the plugin is given a React that contains its crashes (see ssr-guard).
+      const guarded = createGuardedRuntime(`Plugin "${key.split('@')[0]}"`);
+      guards.set(key, guarded);
+      const guardedRequire = (name: string) => (name === 'react' ? guarded.react : name === 'react/jsx-runtime' ? guarded.jsxRuntime : hostRequire(name));
+      tracked = settled(instantiate(new Function('require', 'module', 'exports', `${code}\n//# sourceURL=nextpluggable-plugin:///${key}/client.js`) as Factory, guardedRequire));
+    } catch (e) {
+      console.error(`[nextpluggable] Plugin bundle ${key} could not be loaded on the server and was left out of the page:`, e);
+      tracked = failed(e);
+    }
   } else {
     tracked = new Promise<PluginModule>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -139,7 +148,15 @@ function loadModule(key: string, src: string): Tracked<PluginModule> {
 }
 
 function Loaded(props: { moduleKey: string; src: string; component: string; componentProps: Record<string, unknown> }) {
-  const mod = React.use(loadModule(props.moduleKey, props.src) as Promise<PluginModule>);
+  const tracked = loadModule(props.moduleKey, props.src);
+  if (typeof window === 'undefined') {
+    // A bundle that failed to load must not fail the page: leave it to the browser, where the error boundary handles it.
+    const Component = tracked.status === 'fulfilled' ? tracked.value?.[props.component] : undefined;
+    if (typeof Component !== 'function') return <ClientOnly />;
+    const Guarded = (guards.get(props.moduleKey)?.guard(Component) ?? Component) as React.ComponentType<Record<string, unknown>>;
+    return <Guarded {...props.componentProps} />;
+  }
+  const mod = React.use(tracked as Promise<PluginModule>);
   const Component = mod[props.component] as React.ComponentType<Record<string, unknown>> | undefined;
   if (typeof Component !== 'function') throw new Error(`Plugin bundle ${props.moduleKey} does not export "${props.component}".`);
   return <Component {...props.componentProps} />;

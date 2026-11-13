@@ -62,7 +62,7 @@ export const np = createNextPluggable({
   const existingCatchAll = (await readdir(appDir, { withFileTypes: true })).find((e) => e.isDirectory() && /^\[\[?\.\.\..+\]\]?$/.test(e.name));
   if (existingCatchAll) {
     result.notes.push(
-      `Your site already has a catch-all route (${rel(path.join(appDir, existingCatchAll.name))}). To serve plugin pages from it, render \`<np.PluginPage params={params} searchParams={searchParams} />\` there when your own lookup finds nothing.`,
+      `Your site already has a catch-all route (${rel(path.join(appDir, existingCatchAll.name))}). To serve plugin pages from it, render \`<np.PluginPage params={params} />\` there when your own lookup finds nothing.`,
     );
   } else {
     const catchAll = path.join(appDir, '[...slug]', `page.${x}x`);
@@ -75,12 +75,21 @@ export const np = createNextPluggable({
 export const generateMetadata = np.generatePluginMetadata;
 export default np.PluginPage;
 
-// Cache plugin pages like static pages; the dashboard refreshes them on every change.
-export const generateStaticParams = async () => [];
-export const revalidate = 3600;
+// Faster and cheaper: uncomment the next two lines to cache plugin pages like
+// static pages. The dashboard refreshes the cache whenever a plugin changes.
+// Only do this if nothing in your root layout reads cookies() or headers() on
+// the server: with caching on, such a layout makes these pages fail with a
+// 500 error in production builds (it will not show up in \`next dev\`).
+// export const generateStaticParams = async () => [];
+// export const revalidate = 3600;
 `,
     );
   }
+
+  if (['tsx', 'jsx', 'js'].some((ext) => existsSync(path.join(appDir, `loading.${ext}`))))
+    result.notes.push(
+      'Your app has a root loading file. While plugin pages are uncached (the default), it makes addresses that do not exist return "200 OK" with a noindex tag instead of a 404. To get real 404s, switch on caching in the catch-all route (see the comment in that file) or move the loading file into a route group.',
+    );
 
   // Secrets for local development.
   const envFile = path.join(root, '.env.local');
