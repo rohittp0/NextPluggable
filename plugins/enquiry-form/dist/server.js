@@ -48,8 +48,9 @@ function tooMany(request) {
 }
 var text = (value, max) => typeof value == "string" ? value.trim().slice(0, max) : "", server_default = {
   pages: {
-    form: ({ config }) => ({
-      metadata: { title: config.heading, description: config.intro?.slice(0, 160) }
+    form: ({ config, site, path }) => ({
+      metadata: { title: config.heading, description: config.intro?.slice(0, 160) },
+      jsonLd: { "@context": "https://schema.org", "@type": "ContactPage", name: config.heading, description: config.intro, url: site.url + path }
     })
   },
   api: {

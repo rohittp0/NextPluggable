@@ -47,19 +47,25 @@
 <li class="toc-3"><a href="#the-sites-catch-all-never-returns-404">The site&#39;s catch-all never returns 404</a></li>
 <li class="toc-3"><a href="#caching-plugin-pages-optional">Caching plugin pages (optional)</a></li>
 <li class="toc-2"><a href="#8-give-plugins-the-sites-look">8. Give plugins the site&#39;s look</a></li>
-<li class="toc-2"><a href="#9-sites-with-locale-routing-or-other-middleware">9. Sites with locale routing or other middleware</a></li>
-<li class="toc-2"><a href="#10-verify">10. Verify</a></li>
-<li class="toc-2"><a href="#11-deploy">11. Deploy</a></li>
+<li class="toc-2"><a href="#9-let-search-engines-find-plugin-pages">9. Let search engines find plugin pages</a></li>
+<li class="toc-2"><a href="#10-sites-with-locale-routing-or-other-middleware">10. Sites with locale routing or other middleware</a></li>
+<li class="toc-2"><a href="#11-verify">11. Verify</a></li>
+<li class="toc-2"><a href="#12-deploy">12. Deploy</a></li>
 <li class="toc-2"><a href="#settings-reference">Settings reference</a></li>
 <li class="toc-2"><a href="#security">Security</a></li>
 <li class="toc-2"><a href="#limits">Limits</a></li>
+<li class="toc-2"><a href="#add-this-to-claudemd">Add this to CLAUDE.md</a></li>
+<li class="toc-2"><a href="#changes-to-this-guide">Changes to this guide</a></li>
+<li class="toc-3"><a href="#revision-3">Revision 3</a></li>
+<li class="toc-3"><a href="#revision-2">Revision 2</a></li>
+<li class="toc-3"><a href="#revision-1">Revision 1</a></li>
 <li class="toc-2"><a href="#troubleshooting">Troubleshooting</a></li>
 <li class="toc-2"><a href="#done-when">Done when</a></li>
       </ul>
     </details>
   </aside>
   <main id="content" class="article">
-    <p class="kicker">Guide</p>
+    <p class="kicker">Guide · <a href="#changes-to-this-guide">revision 3</a></p>
     <h1>Integrate NextPluggable into a Next.js site</h1>
     <div class="lead"><p>NextPluggable gives a Next.js site a plugin dashboard. The site&#39;s owner connects GitHub
 repositories that hold plugins, then installs, configures, updates and removes those
@@ -108,9 +114,9 @@ needs a database adapter (<a href="#4-choose-where-data-lives">step 4</a>).</li>
 <code>app/[locale]</code>). If there is one, plugin pages are served from it
 (<a href="#7-serve-plugin-pages">step 7</a>).</li>
 <li><strong>Middleware that rewrites or redirects every path</strong>, typically for locales. The
-dashboard must be excluded from it (<a href="#9-sites-with-locale-routing-or-other-middleware">step 9</a>).</li>
+dashboard must be excluded from it (<a href="#10-sites-with-locale-routing-or-other-middleware">step 10</a>).</li>
 <li><strong>A root layout that does not render <code>&lt;html&gt;</code></strong> (a pass-through that leaves it to a
-nested layout). The dashboard then needs a layout of its own (step 9).</li>
+nested layout). The dashboard then needs a layout of its own (step 10).</li>
 </ol>
 <h2 id="1-install-the-package"><a class="anchor" href="#1-install-the-package" aria-label="Link to this section">#</a>1. Install the package</h2>
 <div class="code"><div class="code-head"><span>bash</span><button type="button" class="code-copy" data-copy="npm install nextpluggable@latest"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code>npm install nextpluggable@latest</code></pre></div>
@@ -125,7 +131,8 @@ exists. It also:</p>
 <ul>
 <li>appends <code>NEXTPLUGGABLE_PASSWORD</code> and <code>NEXTPLUGGABLE_SECRET</code> to <code>.env.local</code>, with
 generated values, unless they are already there;</li>
-<li>adds <code>.nextpluggable/</code> to <code>.gitignore</code>;</li>
+<li>adds <code>.nextpluggable/</code> to <code>.gitignore</code> (add it to the linter&#39;s ignore list as well:
+it holds plugin bundles in development);</li>
 <li>skips the plugin-pages route and prints a note if the site already has a root
 catch-all.</li>
 </ul>
@@ -427,25 +434,29 @@ the address of the request that first generated a cached page, query string
 included, in that page&#39;s inline data, and serves it to later visitors.</li>
 </ul>
 <p>Do not use <code>export const dynamic = &#39;force-static&#39;</code> for this route.</p>
-<p class="check"><strong>Check:</strong> after installing a plugin with a page (<a href="#10-verify">step 10</a>), its address
+<p class="check"><strong>Check:</strong> after installing a plugin with a page (<a href="#11-verify">step 11</a>), its address
 returns 200, and an address nobody owns still returns what it returned before.</p>
 <h2 id="8-give-plugins-the-sites-look"><a class="anchor" href="#8-give-plugins-the-sites-look" aria-label="Link to this section">#</a>8. Give plugins the site&#39;s look</h2>
-<p><strong>Colours.</strong> Plugins take their colours from five CSS custom properties and fall back
+<p><strong>Colours.</strong> Plugins take their colours from six CSS custom properties and fall back
 to neutral defaults when the site sets none. Set them once, in the global stylesheet,
 to the site&#39;s own values:</p>
 <div class="code"><div class="code-head"><span>css</span><button type="button" class="code-copy" data-copy=":root {
   --np-accent: #f57f2e; /* the brand colour: buttons, links, highlights */
+  --np-accent-text: #111827; /* text on the brand colour */
   --np-text: #111827; /* body text */
   --np-muted: #6b7280; /* secondary text */
   --np-border: #e5e7eb; /* lines and input borders */
   --np-surface: #ffffff; /* the background of cards and inputs */
 }"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-selector-pseudo">:root</span> {
   <span class="hljs-attr">--np-accent</span>: <span class="hljs-number">#f57f2e</span>; <span class="hljs-comment">/* the brand colour: buttons, links, highlights */</span>
+  <span class="hljs-attr">--np-accent-text</span>: <span class="hljs-number">#111827</span>; <span class="hljs-comment">/* text on the brand colour */</span>
   <span class="hljs-attr">--np-text</span>: <span class="hljs-number">#111827</span>; <span class="hljs-comment">/* body text */</span>
   <span class="hljs-attr">--np-muted</span>: <span class="hljs-number">#6b7280</span>; <span class="hljs-comment">/* secondary text */</span>
   <span class="hljs-attr">--np-border</span>: <span class="hljs-number">#e5e7eb</span>; <span class="hljs-comment">/* lines and input borders */</span>
   <span class="hljs-attr">--np-surface</span>: <span class="hljs-number">#ffffff</span>; <span class="hljs-comment">/* the background of cards and inputs */</span>
 }</code></pre></div>
+<p><code>--np-accent-text</code> must reach a contrast of 4.5 to 1 against <code>--np-accent</code>. Leave it
+out and plugins choose black or white themselves, whichever reads better.</p>
 <p>Plugins inherit the site&#39;s font. A plugin may still offer a colour setting of its own;
 when the owner fills it in, their choice wins over <code>--np-accent</code>.</p>
 <p><strong>Header and footer.</strong> A plugin page renders inside the layouts of the route that
@@ -481,7 +492,77 @@ export default function Page(props: { params: Promise&lt;{ slug: string[] }&gt; 
 <p>An address no plugin owns still gets the site&#39;s 404 page, not an empty frame.</p>
 <p class="check"><strong>Check:</strong> a plugin page has the site&#39;s header and footer, its text uses the site&#39;s
 font, and its buttons use the brand colour.</p>
-<h2 id="9-sites-with-locale-routing-or-other-middleware"><a class="anchor" href="#9-sites-with-locale-routing-or-other-middleware" aria-label="Link to this section">#</a>9. Sites with locale routing or other middleware</h2>
+<h2 id="9-let-search-engines-find-plugin-pages"><a class="anchor" href="#9-let-search-engines-find-plugin-pages" aria-label="Link to this section">#</a>9. Let search engines find plugin pages</h2>
+<p>Every plugin page is complete for search engines without any work: its own title,
+meta description, canonical link, Open Graph and Twitter tags, and structured data.
+Four things on the site&#39;s side make that work fully.</p>
+<p><strong>Pass the parent metadata through.</strong> A plugin page keeps the site&#39;s sharing image,
+site name and Twitter account when it has none of its own, but only if it can see
+them. The generated route does this already. If you call <code>generatePluginMetadata</code>
+yourself, hand it Next.js&#39;s second argument:</p>
+<div class="code"><div class="code-head"><span>tsx</span><button type="button" class="code-copy" data-copy="import type { ResolvingMetadata } from 'next';
+
+export async function generateMetadata(props: { params: Promise&lt;{ slug: string[] }&gt; }, parent: ResolvingMetadata) {
+  const page = await findMyPage((await props.params).slug);
+  return page ? { title: page.title } : np.generatePluginMetadata(props, parent);
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-keyword">import</span> <span class="hljs-keyword">type</span> { <span class="hljs-title class_">ResolvingMetadata</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;next&#x27;</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">generateMetadata</span>(<span class="hljs-params"><span class="hljs-attr">props</span>: { params: <span class="hljs-built_in">Promise</span>&lt;{ slug: <span class="hljs-built_in">string</span>[] }&gt; }, <span class="hljs-attr">parent</span>: <span class="hljs-title class_">ResolvingMetadata</span></span>) {
+  <span class="hljs-keyword">const</span> page = <span class="hljs-keyword">await</span> <span class="hljs-title function_">findMyPage</span>((<span class="hljs-keyword">await</span> props.<span class="hljs-property">params</span>).<span class="hljs-property">slug</span>);
+  <span class="hljs-keyword">return</span> page ? { <span class="hljs-attr">title</span>: page.<span class="hljs-property">title</span> } : np.<span class="hljs-title function_">generatePluginMetadata</span>(props, parent);
+}</code></pre></div>
+<p><strong>Give titles the site&#39;s name.</strong> With a title template in the root layout, plugin
+pages read &quot;EMI Calculator · My site&quot; in search results:</p>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="export const metadata = { title: { default: 'My site', template: '%s · My site' } };"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> metadata = { <span class="hljs-attr">title</span>: { <span class="hljs-attr">default</span>: <span class="hljs-string">&#x27;My site&#x27;</span>, <span class="hljs-attr">template</span>: <span class="hljs-string">&#x27;%s · My site&#x27;</span> } };</code></pre></div>
+<p><strong>List plugin pages in the sitemap.</strong> <code>np.sitemap()</code> returns the address of every
+plugin page that may be indexed. It never throws. Add its entries to your own:</p>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="// app/sitemap.ts
+import type { MetadataRoute } from 'next';
+import { np } from '@/lib/nextpluggable';
+
+export default async function sitemap(): Promise&lt;MetadataRoute.Sitemap&gt; {
+  return [
+    { url: 'https://example.com/' },
+    // …the site's own pages
+    ...(await np.sitemap()),
+  ];
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// app/sitemap.ts</span>
+<span class="hljs-keyword">import</span> <span class="hljs-keyword">type</span> { <span class="hljs-title class_">MetadataRoute</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;next&#x27;</span>;
+<span class="hljs-keyword">import</span> { np } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@/lib/nextpluggable&#x27;</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">sitemap</span>(<span class="hljs-params"></span>): <span class="hljs-title class_">Promise</span>&lt;<span class="hljs-title class_">MetadataRoute</span>.<span class="hljs-property">Sitemap</span>&gt; {
+  <span class="hljs-keyword">return</span> [
+    { <span class="hljs-attr">url</span>: <span class="hljs-string">&#x27;https://example.com/&#x27;</span> },
+    <span class="hljs-comment">// …the site&#x27;s own pages</span>
+    ...(<span class="hljs-keyword">await</span> np.<span class="hljs-title function_">sitemap</span>()),
+  ];
+}</code></pre></div>
+<p>The sitemap is refreshed whenever plugins change. If the site has no sitemap, create
+this file with its own pages listed too.</p>
+<p><strong>Keep titles and descriptions in <code>&lt;head&gt;</code>.</strong> For a page rendered on each request,
+Next.js 15.2 and later sends the title and meta tags after <code>&lt;/head&gt;</code>, except to
+crawlers on its own list. Audit tools and crawlers that do not run JavaScript then
+miss them, and a Lighthouse SEO score comes and goes with timing. Unless plugin pages
+are cached (<a href="#7-serve-plugin-pages">step 7</a>), switch that off:</p>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="// next.config.ts
+const nextConfig: NextConfig = {
+  htmlLimitedBots: /.*/,
+};"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// next.config.ts</span>
+<span class="hljs-keyword">const</span> <span class="hljs-attr">nextConfig</span>: <span class="hljs-title class_">NextConfig</span> = {
+  <span class="hljs-attr">htmlLimitedBots</span>: <span class="hljs-regexp">/.*/</span>,
+};</code></pre></div>
+<p>This applies to every page of the site that is rendered per request: the response
+waits for <code>generateMetadata</code>, as it did before Next.js 15.2.</p>
+<p><strong>Do not block the pages.</strong> <code>robots.txt</code> must not disallow the addresses plugins use,
+and no layout above the catch-all may set <code>noindex</code> on a production site. The same
+goes for the crawlers of AI assistants, if the site wants to be cited by them.</p>
+<p>Plugin stylesheets under 32 kB are written into the page, so a plugin never adds a
+request the browser waits for before painting. If the site&#39;s Content Security Policy
+forbids inline styles, pass <code>inlineStyles: false</code> to <code>createNextPluggable()</code>.</p>
+<p class="check"><strong>Check:</strong> on a plugin page, <code>npx lighthouse &lt;address&gt; --only-categories=seo</code> scores
+100, the page source shows that page&#39;s own title in <code>og:title</code> and <code>twitter:title</code>,
+and <code>/sitemap.xml</code> lists the page.</p>
+<h2 id="10-sites-with-locale-routing-or-other-middleware"><a class="anchor" href="#10-sites-with-locale-routing-or-other-middleware" aria-label="Link to this section">#</a>10. Sites with locale routing or other middleware</h2>
 <p>Skip this step if the site has no middleware and its root layout renders <code>&lt;html&gt;</code>.</p>
 <p><strong>Keep the dashboard out of locale middleware.</strong> The dashboard lives at one fixed
 address. Middleware that prefixes or rewrites paths (next-intl and similar) would send
@@ -525,7 +606,7 @@ link points at the address without the locale.</p>
 in the settings and move the two files to match.</p>
 <p class="check"><strong>Check:</strong> <code>/admin/plugins</code> returns the dashboard, not a redirect and not one of the
 site&#39;s own pages, including for a browser whose language is not the default locale.</p>
-<h2 id="10-verify"><a class="anchor" href="#10-verify" aria-label="Link to this section">#</a>10. Verify</h2>
+<h2 id="11-verify"><a class="anchor" href="#11-verify" aria-label="Link to this section">#</a>11. Verify</h2>
 <p>Run the site the way it runs in production. Some problems do not appear in <code>next dev</code>.</p>
 <div class="code"><div class="code-head"><span>bash</span><button type="button" class="code-copy" data-copy="npm run build
 npm run start"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code>npm run build
@@ -559,7 +640,7 @@ appears on the site&#39;s pages.</li>
 </ol>
 <p>Last, compare the route table from <code>next build</code> with the one from before the change.
 Routes that were static should still be static.</p>
-<h2 id="11-deploy"><a class="anchor" href="#11-deploy" aria-label="Link to this section">#</a>11. Deploy</h2>
+<h2 id="12-deploy"><a class="anchor" href="#12-deploy" aria-label="Link to this section">#</a>12. Deploy</h2>
 <ul>
 <li>Set <code>NEXTPLUGGABLE_PASSWORD</code>, <code>NEXTPLUGGABLE_SECRET</code> and the storage credentials on
 the host. The build needs the storage credentials too if static pages render a slot.</li>
@@ -589,6 +670,7 @@ next visit. That is how a widget appears on pages that were built statically.</p
 <tr><td><code>github</code></td><td></td><td><code>{ token, apiUrl }</code>. <code>apiUrl</code> is for GitHub Enterprise</td></tr>
 <tr><td><code>allowLocalSources</code></td><td>Only outside production</td><td>Lets a folder on the server be connected as a source, for plugin development. <code>NEXTPLUGGABLE_ALLOW_LOCAL_SOURCES=1</code> switches it on in production</td></tr>
 <tr><td><code>cacheTtlMs</code></td><td><code>5000</code> (<code>0</code> in development)</td><td>How long the list of installed plugins is kept in memory per server instance</td></tr>
+<tr><td><code>inlineStyles</code></td><td><code>true</code></td><td>Write small plugin stylesheets into the page. Set <code>false</code> when the site&#39;s Content Security Policy forbids inline styles</td></tr>
 </tbody>
 </table></div>
 <p>What the returned <code>np</code> object holds:</p>
@@ -597,7 +679,8 @@ next visit. That is how a widget appears on pages that were built statically.</p
 <tbody>
 <tr><td><code>np.handlers</code></td><td><code>{ GET, POST, PUT, PATCH, DELETE }</code> for the API route file</td></tr>
 <tr><td><code>np.DashboardPage</code>, <code>np.dashboardMetadata</code></td><td>The dashboard page and its metadata (<code>noindex</code>)</td></tr>
-<tr><td><code>np.PluginPage</code>, <code>np.generatePluginMetadata</code></td><td>The page a plugin adds at the requested address, and its SEO metadata</td></tr>
+<tr><td><code>np.PluginPage</code>, <code>np.generatePluginMetadata(props, parent)</code></td><td>The page a plugin adds at the requested address, and its SEO metadata</td></tr>
+<tr><td><code>np.sitemap()</code></td><td>Resolves to <code>{ url, lastModified? }</code> for every plugin page that may be indexed. Never throws</td></tr>
 <tr><td><code>np.hasPluginPage(pathname)</code></td><td>Resolves to <code>true</code> when a switched-on plugin serves a page at that address. Never triggers a 404</td></tr>
 <tr><td><code>np.Slot</code></td><td><code>&lt;np.Slot name=&quot;…&quot; /&gt;</code>, a place in the layout plugins may fill</td></tr>
 </tbody>
@@ -629,6 +712,60 @@ return 200 with <code>noindex</code> instead of a 404.</li>
 <li>Plugin storage is a simple key-value store: fine for settings, messages and small
 catalogues, not for large or heavily queried data.</li>
 </ul>
+<h2 id="add-this-to-claudemd"><a class="anchor" href="#add-this-to-claudemd" aria-label="Link to this section">#</a>Add this to CLAUDE.md</h2>
+<p>Put this block in the site&#39;s <code>CLAUDE.md</code>, so later sessions keep the integration
+current.</p>
+<div class="code"><div class="code-head"><span>markdown</span><button type="button" class="code-copy" data-copy="## NextPluggable
+
+This site runs NextPluggable: the plugin dashboard is at `/admin/plugins` and the
+setup is in `lib/nextpluggable.ts`.
+Integration guide: https://rohittp0.github.io/NextPluggable/integrate.md
+Guide revision this site follows: 3
+
+At the start of any task that touches the NextPluggable integration, fetch the guide
+and compare its &quot;Guide revision&quot; with the number above. If the guide is newer, read
+its &quot;Changes to this guide&quot; section, apply every change since the revision above,
+update the number, and only then start the task.
+
+Plugins are written in their own repositories, following
+https://rohittp0.github.io/NextPluggable/build.md. Do not add plugin code to this site."><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-section">## NextPluggable</span>
+
+This site runs NextPluggable: the plugin dashboard is at <span class="hljs-code">`/admin/plugins`</span> and the
+setup is in <span class="hljs-code">`lib/nextpluggable.ts`</span>.
+Integration guide: https://rohittp0.github.io/NextPluggable/integrate.md
+Guide revision this site follows: 3
+
+At the start of any task that touches the NextPluggable integration, fetch the guide
+and compare its &quot;Guide revision&quot; with the number above. If the guide is newer, read
+its &quot;Changes to this guide&quot; section, apply every change since the revision above,
+update the number, and only then start the task.
+
+Plugins are written in their own repositories, following
+https://rohittp0.github.io/NextPluggable/build.md. Do not add plugin code to this site.</code></pre></div>
+<h2 id="changes-to-this-guide"><a class="anchor" href="#changes-to-this-guide" aria-label="Link to this section">#</a>Changes to this guide</h2>
+<p>Newest first. Each entry says what to change on a site integrated before it.</p>
+<h3 id="revision-3"><a class="anchor" href="#revision-3" aria-label="Link to this section">#</a>Revision 3</h3>
+<p>Search engines (<a href="#9-let-search-engines-find-plugin-pages">step 9</a>).</p>
+<ul>
+<li>Where the site calls <code>np.generatePluginMetadata</code> itself, pass the parent metadata as
+the second argument.</li>
+<li>Add <code>...(await np.sitemap())</code> to <code>app/sitemap.ts</code>.</li>
+<li>Set <code>htmlLimitedBots: /.*/</code> in <code>next.config</code>, unless plugin pages are cached.</li>
+<li>Optionally set <code>--np-accent-text</code>, the text colour on the brand colour.</li>
+<li>Add <code>.nextpluggable/</code> to the linter&#39;s ignore list.</li>
+<li>Small plugin stylesheets are now written into the page. Set <code>inlineStyles: false</code> if
+the Content Security Policy forbids inline styles.</li>
+</ul>
+<h3 id="revision-2"><a class="anchor" href="#revision-2" aria-label="Link to this section">#</a>Revision 2</h3>
+<p>The site&#39;s look (<a href="#8-give-plugins-the-sites-look">step 8</a>).</p>
+<ul>
+<li>Set <code>--np-accent</code>, <code>--np-text</code>, <code>--np-muted</code>, <code>--np-border</code> and <code>--np-surface</code> in the
+global stylesheet.</li>
+<li>Where the header and footer are not in a layout above the catch-all, wrap
+<code>np.PluginPage</code> in the site&#39;s page frame.</li>
+</ul>
+<h3 id="revision-1"><a class="anchor" href="#revision-1" aria-label="Link to this section">#</a>Revision 1</h3>
+<p>The first version of this guide.</p>
 <h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2>
 <div class="table"><table>
 <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
@@ -636,14 +773,19 @@ catalogues, not for large or heavily queried data.</li>
 <tr><td>The dashboard says setup is incomplete, naming <code>NEXTPLUGGABLE_SECRET</code></td><td>No secret in production</td><td>Set a secret of at least 16 characters</td></tr>
 <tr><td>Sign-in answers &quot;No dashboard password has been set up yet&quot;</td><td><code>NEXTPLUGGABLE_PASSWORD</code> is empty</td><td>Set it and restart</td></tr>
 <tr><td>&quot;This request was blocked for security reasons&quot; on every change</td><td>The request&#39;s origin does not match the site, usually behind a proxy</td><td>Set <code>NEXT_PUBLIC_SITE_URL</code> to the public address</td></tr>
-<tr><td><code>/admin/plugins</code> redirects, or shows one of the site&#39;s own pages</td><td>Locale middleware handles the path</td><td>Exclude it (<a href="#9-sites-with-locale-routing-or-other-middleware">step 9</a>)</td></tr>
-<tr><td>Next.js reports missing <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags for the dashboard</td><td>The root layout is a pass-through</td><td>Add <code>app/admin/layout.tsx</code> (step 9)</td></tr>
+<tr><td><code>/admin/plugins</code> redirects, or shows one of the site&#39;s own pages</td><td>Locale middleware handles the path</td><td>Exclude it (<a href="#10-sites-with-locale-routing-or-other-middleware">step 10</a>)</td></tr>
+<tr><td>Next.js reports missing <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags for the dashboard</td><td>The root layout is a pass-through</td><td>Add <code>app/admin/layout.tsx</code> (step 10)</td></tr>
 <tr><td>Installing fails with a read-only file system error</td><td>File storage on a serverless host</td><td>Use <code>upstashStorage()</code> or <code>postgresStorage()</code></td></tr>
 <tr><td>&quot;GitHub is limiting requests right now&quot;</td><td>The unauthenticated limit of 60 requests an hour</td><td>Set <code>NEXTPLUGGABLE_GITHUB_TOKEN</code></td></tr>
 <tr><td>A plugin is installed but its page shows the site&#39;s own content</td><td>The site&#39;s catch-all answers first</td><td>Serve plugin pages from it (<a href="#7-serve-plugin-pages">step 7</a>)</td></tr>
 <tr><td>A plugin is installed but paused</td><td>A required setting has no value</td><td>Fill it in on the plugin&#39;s settings screen</td></tr>
 <tr><td>A plugin&#39;s widget does not appear</td><td>The layout has no slot with that name</td><td>Add <code>&lt;np.Slot name=&quot;body.end&quot; /&gt;</code></td></tr>
 <tr><td>A plugin page has no header or footer</td><td>The site renders them per page, not in a layout above the catch-all</td><td>Wrap <code>np.PluginPage</code> in the site&#39;s page frame (<a href="#8-give-plugins-the-sites-look">step 8</a>)</td></tr>
+<tr><td>Lighthouse sometimes reports a missing title or meta description on a plugin page</td><td>Next.js streamed the metadata after <code>&lt;/head&gt;</code></td><td>Set <code>htmlLimitedBots: /.*/</code> (step 9), or cache plugin pages</td></tr>
+<tr><td>The linter reports errors in <code>.nextpluggable/</code></td><td>It is checking stored plugin bundles</td><td>Add <code>.nextpluggable/</code> to the linter&#39;s ignore list</td></tr>
+<tr><td>A shared link to a plugin page shows no image, or the site&#39;s home title</td><td><code>generatePluginMetadata</code> was called without the parent metadata</td><td>Pass Next.js&#39;s second <code>generateMetadata</code> argument (<a href="#9-let-search-engines-find-plugin-pages">step 9</a>)</td></tr>
+<tr><td>Plugin pages are missing from the sitemap</td><td><code>app/sitemap.ts</code> does not include <code>np.sitemap()</code></td><td>Add its entries (step 9)</td></tr>
+<tr><td>Plugin styles do not apply and the console reports a Content Security Policy violation</td><td>The policy forbids inline styles</td><td>Pass <code>inlineStyles: false</code></td></tr>
 <tr><td>Plugins use colours that do not match the site</td><td>The site sets none of the <code>--np-*</code> properties, or the owner chose a colour in the plugin&#39;s settings</td><td>Set them in the global stylesheet (step 8), or clear the plugin&#39;s colour setting</td></tr>
 <tr><td>Unknown addresses return 200 instead of 404</td><td>A <code>loading.tsx</code> sits above the catch-all</td><td>Move it into a route group, or switch on caching</td></tr>
 <tr><td>Static pages became dynamic after adding a slot</td><td>A custom storage adapter calls <code>fetch</code> with <code>cache: &#39;no-store&#39;</code></td><td>Read storage without going through the <code>fetch</code> wrapper Next.js installs, as <code>upstashStorage()</code> does</td></tr>
@@ -655,6 +797,8 @@ catalogues, not for large or heavily queried data.</li>
 <li><input disabled="" type="checkbox"> <code>/admin/plugins</code> shows the dashboard and requires a sign-in.</li>
 <li><input disabled="" type="checkbox"> A plugin installed from the dashboard serves its page without a rebuild.</li>
 <li><input disabled="" type="checkbox"> That page has the site&#39;s header, footer, font and brand colour.</li>
+<li><input disabled="" type="checkbox"> That page scores 100 for SEO in Lighthouse and is listed in <code>/sitemap.xml</code>.</li>
+<li><input disabled="" type="checkbox"> The site&#39;s <code>CLAUDE.md</code> holds the block below, with the current guide revision.</li>
 <li><input disabled="" type="checkbox"> An address that no page owns behaves as it did before.</li>
 <li><input disabled="" type="checkbox"> The password and secret are set on the host and are not in git.</li>
 <li><input disabled="" type="checkbox"> On a serverless host, storage is a database adapter.</li>

@@ -31,7 +31,12 @@ describe('nextpluggable init', () => {
     expect(env).toMatch(/^NEXTPLUGGABLE_SECRET=.{43}$/m);
     expect(result.password).toBe(/^NEXTPLUGGABLE_PASSWORD=(.+)$/m.exec(env)![1]);
     expect(await read(dir, '.gitignore')).toContain('.nextpluggable/');
-    expect(result.notes).toEqual([]);
+    expect(result.notes).toEqual([expect.stringContaining('Your site has no sitemap')]);
+  });
+
+  it('says how to list plugin pages in a sitemap the site already has', async () => {
+    const dir = await project({ 'app/layout.tsx': '', 'app/sitemap.ts': '', 'tsconfig.json': '{}', '.gitignore': '.env*\n' });
+    expect((await init(dir)).notes).toEqual([expect.stringContaining('add `...(await np.sitemap())` to the entries app/sitemap.ts returns')]);
   });
 
   it('follows a src/ layout and plain JavaScript', async () => {

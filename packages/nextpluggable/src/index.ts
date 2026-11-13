@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache';
 import { createHandler } from './api/handler.js';
 import { resolveConfig, type NextPluggableConfig } from './config.js';
+import { pluginSitemap } from './core/sitemap.js';
 import { createDashboardPage, dashboardMetadata } from './next/dashboard-page.js';
 import { createPluginPage } from './next/plugin-page.js';
 import { createSlot } from './next/slot.js';
@@ -10,6 +11,7 @@ export type { AdminUser, AuthAdapter } from './auth/types.js';
 export type { StorageAdapter } from './storage/types.js';
 export type { PluginPageProps } from './next/plugin-page.js';
 export type { SlotProps } from './next/slot.js';
+export type { PluginSitemapEntry } from './core/sitemap.js';
 export { passwordAuth, type PasswordAuthOptions } from './auth/password.js';
 export { customAuth, type CustomAuthOptions } from './auth/custom.js';
 export { fileStorage, type FileStorageOptions } from './storage/file.js';
@@ -29,6 +31,7 @@ export function createNextPluggable(config: NextPluggableConfig = {}) {
     onSiteChange() {
       try {
         revalidatePath('/', 'layout');
+        revalidatePath('/sitemap.xml');
       } catch (e) {
         console.warn('[nextpluggable] Could not refresh cached pages:', e);
       }
@@ -50,6 +53,20 @@ export function createNextPluggable(config: NextPluggableConfig = {}) {
      * catch-all route of your own to decide whether to render `PluginPage` or your own content.
      */
     hasPluginPage,
+    /**
+     * `await np.sitemap()`: the address of every page that switched-on plugins serve and
+     * search engines may index, as `{ url, lastModified? }`. Add them to `app/sitemap.ts`.
+     * Never throws.
+     */
+    sitemap: async () => {
+      try {
+        return await pluginSitemap(getConfig());
+      } catch (e) {
+        // Setup that is not finished (no secret yet) must not break the site's sitemap.
+        console.error('[nextpluggable] Plugin pages could not be listed for the sitemap:', e);
+        return [];
+      }
+    },
     /** `<Slot name="…" />` — a place in your layout that plugins can fill. */
     Slot: createSlot(getConfig),
   };

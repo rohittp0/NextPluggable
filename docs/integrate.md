@@ -11,6 +11,11 @@ existing site. It is a one-time job for a developer.
 > Never commit the dashboard password or secret, and never print them in your summary.
 > If the site has an unusual setup that this page does not cover, stop and ask the
 > person instead of guessing.
+>
+> **Guide revision: 3.** This guide changes as NextPluggable does. On a site that is
+> already integrated, compare this number with the one recorded in the site's
+> `CLAUDE.md`. If the guide is newer, read
+> [Changes to this guide](#changes-to-this-guide) and apply what changed.
 
 ## What gets added
 
@@ -47,9 +52,9 @@ Then look for three things that change the steps below, and note what you find:
    `app/[locale]`). If there is one, plugin pages are served from it
    ([step 7](#7-serve-plugin-pages)).
 2. **Middleware that rewrites or redirects every path**, typically for locales. The
-   dashboard must be excluded from it ([step 9](#9-sites-with-locale-routing-or-other-middleware)).
+   dashboard must be excluded from it ([step 10](#10-sites-with-locale-routing-or-other-middleware)).
 3. **A root layout that does not render `<html>`** (a pass-through that leaves it to a
-   nested layout). The dashboard then needs a layout of its own (step 9).
+   nested layout). The dashboard then needs a layout of its own (step 10).
 
 ## 1. Install the package
 
@@ -75,7 +80,8 @@ exists. It also:
 
 - appends `NEXTPLUGGABLE_PASSWORD` and `NEXTPLUGGABLE_SECRET` to `.env.local`, with
   generated values, unless they are already there;
-- adds `.nextpluggable/` to `.gitignore`;
+- adds `.nextpluggable/` to `.gitignore` (add it to the linter's ignore list as well:
+  it holds plugin bundles in development);
 - skips the plugin-pages route and prints a note if the site already has a root
   catch-all.
 
@@ -345,24 +351,28 @@ Only do this when both of these hold:
 
 Do not use `export const dynamic = 'force-static'` for this route.
 
-**Check:** after installing a plugin with a page ([step 10](#10-verify)), its address
+**Check:** after installing a plugin with a page ([step 11](#11-verify)), its address
 returns 200, and an address nobody owns still returns what it returned before.
 
 ## 8. Give plugins the site's look
 
-**Colours.** Plugins take their colours from five CSS custom properties and fall back
+**Colours.** Plugins take their colours from six CSS custom properties and fall back
 to neutral defaults when the site sets none. Set them once, in the global stylesheet,
 to the site's own values:
 
 ```css
 :root {
   --np-accent: #f57f2e; /* the brand colour: buttons, links, highlights */
+  --np-accent-text: #111827; /* text on the brand colour */
   --np-text: #111827; /* body text */
   --np-muted: #6b7280; /* secondary text */
   --np-border: #e5e7eb; /* lines and input borders */
   --np-surface: #ffffff; /* the background of cards and inputs */
 }
 ```
+
+`--np-accent-text` must reach a contrast of 4.5 to 1 against `--np-accent`. Leave it
+out and plugins choose black or white themselves, whichever reads better.
 
 Plugins inherit the site's font. A plugin may still offer a colour setting of its own;
 when the owner fills it in, their choice wins over `--np-accent`.
@@ -394,7 +404,82 @@ An address no plugin owns still gets the site's 404 page, not an empty frame.
 **Check:** a plugin page has the site's header and footer, its text uses the site's
 font, and its buttons use the brand colour.
 
-## 9. Sites with locale routing or other middleware
+## 9. Let search engines find plugin pages
+
+Every plugin page is complete for search engines without any work: its own title,
+meta description, canonical link, Open Graph and Twitter tags, and structured data.
+Four things on the site's side make that work fully.
+
+**Pass the parent metadata through.** A plugin page keeps the site's sharing image,
+site name and Twitter account when it has none of its own, but only if it can see
+them. The generated route does this already. If you call `generatePluginMetadata`
+yourself, hand it Next.js's second argument:
+
+```tsx
+import type { ResolvingMetadata } from 'next';
+
+export async function generateMetadata(props: { params: Promise<{ slug: string[] }> }, parent: ResolvingMetadata) {
+  const page = await findMyPage((await props.params).slug);
+  return page ? { title: page.title } : np.generatePluginMetadata(props, parent);
+}
+```
+
+**Give titles the site's name.** With a title template in the root layout, plugin
+pages read "EMI Calculator · My site" in search results:
+
+```ts
+export const metadata = { title: { default: 'My site', template: '%s · My site' } };
+```
+
+**List plugin pages in the sitemap.** `np.sitemap()` returns the address of every
+plugin page that may be indexed. It never throws. Add its entries to your own:
+
+```ts
+// app/sitemap.ts
+import type { MetadataRoute } from 'next';
+import { np } from '@/lib/nextpluggable';
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  return [
+    { url: 'https://example.com/' },
+    // …the site's own pages
+    ...(await np.sitemap()),
+  ];
+}
+```
+
+The sitemap is refreshed whenever plugins change. If the site has no sitemap, create
+this file with its own pages listed too.
+
+**Keep titles and descriptions in `<head>`.** For a page rendered on each request,
+Next.js 15.2 and later sends the title and meta tags after `</head>`, except to
+crawlers on its own list. Audit tools and crawlers that do not run JavaScript then
+miss them, and a Lighthouse SEO score comes and goes with timing. Unless plugin pages
+are cached ([step 7](#7-serve-plugin-pages)), switch that off:
+
+```ts
+// next.config.ts
+const nextConfig: NextConfig = {
+  htmlLimitedBots: /.*/,
+};
+```
+
+This applies to every page of the site that is rendered per request: the response
+waits for `generateMetadata`, as it did before Next.js 15.2.
+
+**Do not block the pages.** `robots.txt` must not disallow the addresses plugins use,
+and no layout above the catch-all may set `noindex` on a production site. The same
+goes for the crawlers of AI assistants, if the site wants to be cited by them.
+
+Plugin stylesheets under 32 kB are written into the page, so a plugin never adds a
+request the browser waits for before painting. If the site's Content Security Policy
+forbids inline styles, pass `inlineStyles: false` to `createNextPluggable()`.
+
+**Check:** on a plugin page, `npx lighthouse <address> --only-categories=seo` scores
+100, the page source shows that page's own title in `og:title` and `twitter:title`,
+and `/sitemap.xml` lists the page.
+
+## 10. Sites with locale routing or other middleware
 
 Skip this step if the site has no middleware and its root layout renders `<html>`.
 
@@ -443,7 +528,7 @@ in the settings and move the two files to match.
 **Check:** `/admin/plugins` returns the dashboard, not a redirect and not one of the
 site's own pages, including for a browser whose language is not the default locale.
 
-## 10. Verify
+## 11. Verify
 
 Run the site the way it runs in production. Some problems do not appear in `next dev`.
 
@@ -479,7 +564,7 @@ Then, in a browser:
 Last, compare the route table from `next build` with the one from before the change.
 Routes that were static should still be static.
 
-## 11. Deploy
+## 12. Deploy
 
 - Set `NEXTPLUGGABLE_PASSWORD`, `NEXTPLUGGABLE_SECRET` and the storage credentials on
   the host. The build needs the storage credentials too if static pages render a slot.
@@ -511,6 +596,7 @@ Everything `createNextPluggable()` accepts. All of it is optional.
 | `github` | | `{ token, apiUrl }`. `apiUrl` is for GitHub Enterprise |
 | `allowLocalSources` | Only outside production | Lets a folder on the server be connected as a source, for plugin development. `NEXTPLUGGABLE_ALLOW_LOCAL_SOURCES=1` switches it on in production |
 | `cacheTtlMs` | `5000` (`0` in development) | How long the list of installed plugins is kept in memory per server instance |
+| `inlineStyles` | `true` | Write small plugin stylesheets into the page. Set `false` when the site's Content Security Policy forbids inline styles |
 
 What the returned `np` object holds:
 
@@ -518,7 +604,8 @@ What the returned `np` object holds:
 |---|---|
 | `np.handlers` | `{ GET, POST, PUT, PATCH, DELETE }` for the API route file |
 | `np.DashboardPage`, `np.dashboardMetadata` | The dashboard page and its metadata (`noindex`) |
-| `np.PluginPage`, `np.generatePluginMetadata` | The page a plugin adds at the requested address, and its SEO metadata |
+| `np.PluginPage`, `np.generatePluginMetadata(props, parent)` | The page a plugin adds at the requested address, and its SEO metadata |
+| `np.sitemap()` | Resolves to `{ url, lastModified? }` for every plugin page that may be indexed. Never throws |
 | `np.hasPluginPage(pathname)` | Resolves to `true` when a switched-on plugin serves a page at that address. Never triggers a 404 |
 | `np.Slot` | `<np.Slot name="…" />`, a place in the layout plugins may fill |
 
@@ -550,6 +637,58 @@ addresses. The dashboard refuses them.
 - Plugin storage is a simple key-value store: fine for settings, messages and small
   catalogues, not for large or heavily queried data.
 
+## Add this to CLAUDE.md
+
+Put this block in the site's `CLAUDE.md`, so later sessions keep the integration
+current.
+
+```markdown
+## NextPluggable
+
+This site runs NextPluggable: the plugin dashboard is at `/admin/plugins` and the
+setup is in `lib/nextpluggable.ts`.
+Integration guide: https://rohittp0.github.io/NextPluggable/integrate.md
+Guide revision this site follows: 3
+
+At the start of any task that touches the NextPluggable integration, fetch the guide
+and compare its "Guide revision" with the number above. If the guide is newer, read
+its "Changes to this guide" section, apply every change since the revision above,
+update the number, and only then start the task.
+
+Plugins are written in their own repositories, following
+https://rohittp0.github.io/NextPluggable/build.md. Do not add plugin code to this site.
+```
+
+## Changes to this guide
+
+Newest first. Each entry says what to change on a site integrated before it.
+
+### Revision 3
+
+Search engines ([step 9](#9-let-search-engines-find-plugin-pages)).
+
+- Where the site calls `np.generatePluginMetadata` itself, pass the parent metadata as
+  the second argument.
+- Add `...(await np.sitemap())` to `app/sitemap.ts`.
+- Set `htmlLimitedBots: /.*/` in `next.config`, unless plugin pages are cached.
+- Optionally set `--np-accent-text`, the text colour on the brand colour.
+- Add `.nextpluggable/` to the linter's ignore list.
+- Small plugin stylesheets are now written into the page. Set `inlineStyles: false` if
+  the Content Security Policy forbids inline styles.
+
+### Revision 2
+
+The site's look ([step 8](#8-give-plugins-the-sites-look)).
+
+- Set `--np-accent`, `--np-text`, `--np-muted`, `--np-border` and `--np-surface` in the
+  global stylesheet.
+- Where the header and footer are not in a layout above the catch-all, wrap
+  `np.PluginPage` in the site's page frame.
+
+### Revision 1
+
+The first version of this guide.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
@@ -557,14 +696,19 @@ addresses. The dashboard refuses them.
 | The dashboard says setup is incomplete, naming `NEXTPLUGGABLE_SECRET` | No secret in production | Set a secret of at least 16 characters |
 | Sign-in answers "No dashboard password has been set up yet" | `NEXTPLUGGABLE_PASSWORD` is empty | Set it and restart |
 | "This request was blocked for security reasons" on every change | The request's origin does not match the site, usually behind a proxy | Set `NEXT_PUBLIC_SITE_URL` to the public address |
-| `/admin/plugins` redirects, or shows one of the site's own pages | Locale middleware handles the path | Exclude it ([step 9](#9-sites-with-locale-routing-or-other-middleware)) |
-| Next.js reports missing `<html>` and `<body>` tags for the dashboard | The root layout is a pass-through | Add `app/admin/layout.tsx` (step 9) |
+| `/admin/plugins` redirects, or shows one of the site's own pages | Locale middleware handles the path | Exclude it ([step 10](#10-sites-with-locale-routing-or-other-middleware)) |
+| Next.js reports missing `<html>` and `<body>` tags for the dashboard | The root layout is a pass-through | Add `app/admin/layout.tsx` (step 10) |
 | Installing fails with a read-only file system error | File storage on a serverless host | Use `upstashStorage()` or `postgresStorage()` |
 | "GitHub is limiting requests right now" | The unauthenticated limit of 60 requests an hour | Set `NEXTPLUGGABLE_GITHUB_TOKEN` |
 | A plugin is installed but its page shows the site's own content | The site's catch-all answers first | Serve plugin pages from it ([step 7](#7-serve-plugin-pages)) |
 | A plugin is installed but paused | A required setting has no value | Fill it in on the plugin's settings screen |
 | A plugin's widget does not appear | The layout has no slot with that name | Add `<np.Slot name="body.end" />` |
 | A plugin page has no header or footer | The site renders them per page, not in a layout above the catch-all | Wrap `np.PluginPage` in the site's page frame ([step 8](#8-give-plugins-the-sites-look)) |
+| Lighthouse sometimes reports a missing title or meta description on a plugin page | Next.js streamed the metadata after `</head>` | Set `htmlLimitedBots: /.*/` (step 9), or cache plugin pages |
+| The linter reports errors in `.nextpluggable/` | It is checking stored plugin bundles | Add `.nextpluggable/` to the linter's ignore list |
+| A shared link to a plugin page shows no image, or the site's home title | `generatePluginMetadata` was called without the parent metadata | Pass Next.js's second `generateMetadata` argument ([step 9](#9-let-search-engines-find-plugin-pages)) |
+| Plugin pages are missing from the sitemap | `app/sitemap.ts` does not include `np.sitemap()` | Add its entries (step 9) |
+| Plugin styles do not apply and the console reports a Content Security Policy violation | The policy forbids inline styles | Pass `inlineStyles: false` |
 | Plugins use colours that do not match the site | The site sets none of the `--np-*` properties, or the owner chose a colour in the plugin's settings | Set them in the global stylesheet (step 8), or clear the plugin's colour setting |
 | Unknown addresses return 200 instead of 404 | A `loading.tsx` sits above the catch-all | Move it into a route group, or switch on caching |
 | Static pages became dynamic after adding a slot | A custom storage adapter calls `fetch` with `cache: 'no-store'` | Read storage without going through the `fetch` wrapper Next.js installs, as `upstashStorage()` does |
@@ -575,6 +719,8 @@ addresses. The dashboard refuses them.
 - [ ] `/admin/plugins` shows the dashboard and requires a sign-in.
 - [ ] A plugin installed from the dashboard serves its page without a rebuild.
 - [ ] That page has the site's header, footer, font and brand colour.
+- [ ] That page scores 100 for SEO in Lighthouse and is listed in `/sitemap.xml`.
+- [ ] The site's `CLAUDE.md` holds the block below, with the current guide revision.
 - [ ] An address that no page owns behaves as it did before.
 - [ ] The password and secret are set on the host and are not in git.
 - [ ] On a serverless host, storage is a database adapter.

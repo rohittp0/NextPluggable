@@ -153,6 +153,10 @@ code {
   top: 12px;
 }
 
+.kicker a {
+  color: inherit;
+}
+
 .kicker {
   color: var(--primary);
   font-size: 0.82rem;

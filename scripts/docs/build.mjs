@@ -119,10 +119,27 @@ ${body}
 `;
 }
 
+/**
+ * Each guide carries a revision number that agents compare with the one recorded in a
+ * repository's CLAUDE.md. It has to agree in three places, or agents would be told
+ * they are up to date when they are not.
+ */
+export function guideRevision(slug, source) {
+  const stated = /\*\*Guide revision: (\d+)\.\*\*/.exec(source)?.[1];
+  if (!stated) throw new Error(`${slug}.md must state "**Guide revision: N.**" in its note for agents.`);
+  const changes = source.split('\n## Changes to this guide\n')[1];
+  const newest = changes && /^### Revision (\d+)$/m.exec(changes)?.[1];
+  if (newest !== stated) throw new Error(`${slug}.md states revision ${stated}, but the newest entry under "Changes to this guide" is ${newest ?? 'missing'}.`);
+  const recorded = /^Guide revision this (?:repository|site) follows: (\d+)$/m.exec(source)?.[1];
+  if (recorded !== stated) throw new Error(`${slug}.md states revision ${stated}, but its CLAUDE.md block records ${recorded ?? 'none'}.`);
+  return Number(stated);
+}
+
 const LANGS = { ts: 'typescript', tsx: 'typescript', js: 'javascript', jsx: 'javascript', bash: 'bash', json: 'json', yaml: 'yaml', css: 'css', markdown: 'markdown' };
 
 function renderGuide(guide, source) {
   const r = '../';
+  const revision = guideRevision(guide.slug, source);
   const marked = new Marked({ gfm: true });
   const tokens = marked.lexer(source);
 
@@ -212,7 +229,7 @@ ${tocHtml}
     </details>
   </aside>
   <main id="content" class="article">
-    <p class="kicker">Guide</p>
+    <p class="kicker">Guide · <a href="#changes-to-this-guide">revision ${revision}</a></p>
     <h1>${esc(title)}</h1>
     <div class="lead">${lead}</div>
     <section class="agent-box" aria-label="This page for coding agents">
@@ -237,16 +254,17 @@ ${article}
   });
 }
 
-function renderLlmsTxt() {
+function renderLlmsTxt(docsDir) {
+  const revision = (g) => guideRevision(g.slug, readFileSync(path.join(docsDir, `${g.slug}.md`), 'utf8'));
   return `# NextPluggable
 
 > WordPress-style plugins for Next.js. One package gives a site a dashboard where its owner installs, configures, updates and removes plugins from GitHub repositories, with no rebuild and no redeploy.
 
-Each guide below is a complete, self-contained instruction set written for coding agents.
+Each guide below is a complete, self-contained instruction set written for coding agents. The guides change as NextPluggable does: each states a revision number and lists what changed, and a project that follows one should record that number in its CLAUDE.md and check it at the start of each task.
 
 ## Guides
 
-${GUIDES.map((g) => `- [${g.nav}](${SITE_URL}/${g.slug}.md): ${g.summary}`).join('\n')}
+${GUIDES.map((g) => `- [${g.nav}](${SITE_URL}/${g.slug}.md) (revision ${revision(g)}): ${g.summary}`).join('\n')}
 
 ## Optional
 
@@ -282,7 +300,7 @@ export function renderSite(docsDir = DOCS_DIR) {
       body: `<main id="content" class="missing"><p class="kicker">404</p><h1>There is nothing at this address.</h1><p>Try one of the guides: ${GUIDES.map((g) => `<a href="${base}${g.slug}/">${g.nav}</a>`).join(' or ')}.</p></main>`,
     }),
   );
-  files.set('llms.txt', renderLlmsTxt());
+  files.set('llms.txt', renderLlmsTxt(docsDir));
   return files;
 }
 

@@ -96,7 +96,7 @@ async function serveAsset(cfg: ResolvedConfig, pluginId: string, hash: string, n
   return new Response(body, {
     headers: {
       'content-type': asset.type,
-      'cache-control': 'public, max-age=31536000, immutable',
+      'cache-control': 'public, max-age=31536000, s-maxage=31536000, immutable',
       'x-content-type-options': 'nosniff',
     },
   });

@@ -14,6 +14,11 @@ dashboard.
 > from `next/*`. When you set up a new repository, also add the block from
 > [Add this to CLAUDE.md](#add-this-to-claudemd) to its `CLAUDE.md`, so later sessions
 > keep to the same rules.
+>
+> **Guide revision: 3.** This guide changes as NextPluggable does. If the repository's
+> `CLAUDE.md` records an older revision, read
+> [Changes to this guide](#changes-to-this-guide) first and bring every plugin in the
+> repository in line with what changed, before doing anything else.
 
 ## How a plugin reaches a site
 
@@ -149,7 +154,13 @@ about the plugin comes from this file.
   "category": "Examples",
 
   "pages": [
-    { "id": "greeting", "path": "/hello", "component": "HelloPage", "title": "Hello" }
+    {
+      "id": "greeting",
+      "path": "/hello",
+      "component": "HelloPage",
+      "title": "Hello",
+      "description": "A friendly greeting, and a count of how many times this page has been opened."
+    }
   ],
   "slots": [{ "slot": "body.end", "component": "HelloBadge" }],
   "admin": [{ "id": "stats", "title": "Stats", "component": "HelloStats" }],
@@ -192,8 +203,8 @@ about the plugin comes from this file.
 | `id` | A short identifier: letters, digits and underscores, starting with a letter. The server loader for the page is matched by it |
 | `path` | The default address. Starts with `/`, has no trailing slash, and cannot be `/` itself. `:name` matches one segment, and a final `*` matches the rest. Both arrive in `params` |
 | `component` | The name of a component exported from the client entry |
-| `title` | Shown in the dashboard, and the default `<title>` |
-| `description` | Optional. Shown in the dashboard, and the default meta description |
+| `title` | The default `<title>`, also shown in the dashboard. About 60 characters at most |
+| `description` | What search results show under the title, also shown in the dashboard. One or two sentences written for visitors, about 150 characters. The build points out a page without one |
 | `configurablePath` | Optional. `false` stops the owner changing the address |
 
 - The owner can change the address of any page with a fixed path. **Never hard-code
@@ -415,7 +426,7 @@ Every function receives a context object:
 | Key | Meaning |
 |---|---|
 | `data` | Passed to the page component as `data`. Must be JSON-serialisable |
-| `metadata` | `{ title, description, canonical, image, noindex }` |
+| `metadata` | `{ title, description, canonical, image, imageAlt, type, publishedTime, modifiedTime, noindex }`. All optional: see [step 7](#7-get-the-seo-right) |
 | `jsonLd` | schema.org structured data: an object or a list of objects |
 | `notFound: true` | Respond with the site's 404 page |
 | `redirect: '/somewhere'` | Redirect to another address |
@@ -442,6 +453,27 @@ returns a `Response`.
 - Helpers from `@nextpluggable/plugin/server`: `json(body, status?, headers?)` builds a
   JSON response, and `readJson<T>(request, maxBytes?)` reads a JSON body, returning
   `null` when it is missing, malformed or too large.
+
+### Sitemap
+
+Pages with a fixed address are listed in the site's sitemap automatically. For a page
+with parameters, only the plugin knows which addresses exist, so list them:
+
+```ts
+export default definePluginServer({
+  // …
+  sitemap: async ({ storage, paths }) => {
+    const slugs = await storage.list('product/');
+    return slugs.map((key) => ({
+      path: `/shop/${key.slice('product/'.length)}`,
+      lastModified: '2026-11-13', // optional ISO date
+    }));
+  },
+});
+```
+
+An entry is a path, or `{ path, lastModified }`. Addresses that are not one of the
+plugin's own pages are ignored. Leave out anything a loader would mark `noindex`.
 
 ### Lifecycle
 
@@ -474,6 +506,15 @@ your components.
 .hello-badge {
   /* The site's brand colour, unless the owner picked one in the settings. */
   --hello-accent: var(--np-accent, #4f46e5);
+  /* Text on that colour: the site's choice, else white. */
+  --hello-on-accent: var(--np-accent-text, #fff);
+}
+/* Better where the browser can do it: black or white, whichever reads well on the accent. */
+@supports (color: oklch(from red l c h)) {
+  .hello,
+  .hello-badge {
+    --hello-on-accent: var(--np-accent-text, oklch(from var(--hello-accent) clamp(0, (0.58 - l) * 1000, 1) 0 0));
+  }
 }
 .hello {
   max-width: 40rem;
@@ -494,17 +535,18 @@ your components.
   padding: 0.5rem 0.9rem;
   border-radius: 999px;
   background: var(--hello-accent);
-  color: #fff;
+  color: var(--hello-on-accent);
   text-decoration: none;
 }
 ```
 
-**Take your colours from the site.** A site describes its look with five CSS custom
+**Take your colours from the site.** A site describes its look with six CSS custom
 properties. Read them, always with a fallback, because a site may set none of them:
 
 | Property | Use it for |
 |---|---|
 | `--np-accent` | The site's brand colour: buttons, links, highlights |
+| `--np-accent-text` | Text and icons on top of the accent |
 | `--np-text` | Body text |
 | `--np-muted` | Secondary text |
 | `--np-border` | Lines and input borders |
@@ -513,6 +555,9 @@ properties. Read them, always with a fallback, because a site may set none of th
 - **Do not give a colour setting a `default`.** Leave it empty, fall back to
   `--np-accent` in CSS, and apply the owner's value only when there is one, as the
   example does. A default would override every site's own colour.
+- **Never hard-code white text on the accent.** A site's brand colour may be light.
+  Use `--np-accent-text`, and fall back to a colour worked out from the accent, as the
+  example does. Text must reach a contrast of 4.5 to 1 against what is behind it.
 - Inherit the site's fonts. Do not set `font-family`.
 - **There is no style isolation.** Prefix every class with something of your own
   (`.hello-…`). Never style bare elements such as `h1` or `button` outside your own
@@ -522,7 +567,110 @@ properties. Read them, always with a fallback, because a site may set none of th
 - The dashboard sets `--np-text`, `--np-muted`, `--np-border` and `--np-surface` too,
   so dashboard screens match it.
 
-## 7. Build and commit
+## 7. Get the SEO right
+
+A plugin is responsible for the SEO of everything it adds. The site does the mechanical
+part for every plugin page, with no code from you:
+
+| Every page gets | From |
+|---|---|
+| `<title>` | The loader's `metadata.title`, else the page `title` |
+| Meta description | The loader's `metadata.description`, else the page `description`, else the plugin's |
+| Canonical link | The page's own address, unless the loader names another |
+| Open Graph and Twitter tags | The same title and description, and your `image`, else the site's own sharing image |
+| Structured data | Your `jsonLd`, else a plain `WebPage` entry |
+| A sitemap entry | Every fixed address that may be indexed, plus what your `sitemap` lists |
+| Indexing | Allowed, unless the loader returns `noindex: true` |
+
+That makes a page complete. What makes it good, only you can do. Judge it the way
+an audit does: by the HTML the server sends, not by what the page looks like once
+scripts have run.
+
+### For search engines
+
+- **Write a `description` for every page in `plugin.json`**, for the visitor who reads it
+  in a search result. Not "The page with the form". Return a better one from the loader
+  when the content decides it, such as a product's summary.
+- **One `<h1>` per page**, saying what the page is. Headings below it in order, with no
+  level skipped.
+- **Return structured data that fits the content**: `Product`, `Article`, `FAQPage`,
+  `ContactPage`, `WebApplication` and so on. It must describe what is visibly on the
+  page. The default says only "this is a web page".
+- **List pages that have parameters** with [`sitemap`](#sitemap).
+- **Mark pages that offer searchers nothing as `noindex`**: thank-you pages, previews,
+  empty search results, anything per visitor.
+- **One address per piece of content.** When the same content is reachable at two
+  addresses, return `canonical` naming the main one.
+- **Links are real links**, made with `Link` or `<a href>`, and their text says where
+  they go. Not "click here", and never a `<div>` with a click handler.
+- For a dated piece of writing, set `type: 'article'` with `publishedTime` and
+  `modifiedTime`.
+
+### For AI search
+
+Assistants that answer questions read pages much as a search engine does, and most of
+their crawlers do not run JavaScript.
+
+- **Put the content in the server-rendered HTML.** What appears only after a fetch in
+  the browser does not exist for them. Render tabs, accordions and "show more" content
+  in the HTML and hide it with CSS, not by leaving it out.
+- **Say it in words.** A calculator, chart or map should come with a sentence or two
+  that states what it does and what the result means. A tool with no text gives a
+  machine nothing to quote.
+- **Lead with the answer.** Put the fact a visitor came for in the first paragraph
+  under the heading, in a full sentence that still makes sense when quoted alone.
+- **Use the element that means what you mean**: lists for lists, `<table>` with `<th>`
+  for data, `<time datetime>` for dates, `<address>` for contact details.
+- Questions and answers go on the page as text, with `FAQPage` structured data.
+
+### For everyone who uses the page
+
+Accessibility and phones are part of the same audit, and the same care.
+
+- **Text reaches a contrast of 4.5 to 1**, including text on the accent colour
+  ([step 6](#6-style-it)).
+- **Every input has a `<label>`.** Errors are tied to their field with
+  `aria-describedby` and announced, not shown by colour alone.
+- **Buttons are `<button>`, links are `<a>`.** Everything works from the keyboard, and
+  the focused element is visibly outlined.
+- **Images have `alt` text, `width` and `height`.** Decorative icons get
+  `aria-hidden="true"`. Add `loading="lazy"` below the first screen.
+- **Data tables have header cells** (`<th scope="col">`), and a caption or a heading.
+- **It fits a phone.** No horizontal scrolling at 320 pixels wide, nothing with a fixed
+  width, controls at least 24 pixels across with room between them, and form text of
+  16 pixels or more so phones do not zoom in.
+- Respect `prefers-reduced-motion`. Never set the page's `lang`: the site does.
+
+### Widgets
+
+A widget is on every page of the site, so it must cost those pages nothing and may
+only help them.
+
+- **Never move the page.** Position the widget `fixed` or `absolute`, or give it a size
+  that is the same from the first paint. Never insert it above content that is
+  already showing.
+- **No headings.** Never an `<h1>`, and no `<h2>` to `<h6>` either. The outline of a
+  page belongs to the page.
+- **Render on the server.** Return the widget's real markup on the first render, not an
+  empty box that fills in later.
+- **A link is a real link with text that describes it.** A widget that links to your own
+  page from every page of the site is good internal linking.
+- **Stay small.** The site writes a plugin's stylesheet into the page when it is under
+  32 kB, so it is never an extra request the browser waits for. Past that it is. Load
+  no web fonts and no third-party scripts when the page loads.
+- **No hidden text**, and nothing written for search engines rather than people.
+- **Do not cover the page.** On a phone a floating widget stays in a corner, small, and
+  clear of the site's own controls.
+- Its text meets the same contrast rule as a page's.
+
+**Check:** with the plugin on a site ([step 9](#9-try-it-on-a-site)), run
+`npx lighthouse http://localhost:3000/hello --only-categories=seo,accessibility`. SEO
+scores 100, and accessibility reports nothing inside your plugin's markup. `curl` the
+page: the title, description, canonical link, structured data and the page's main
+content are all in the HTML. On another page of the site, the widget causes no layout
+shift.
+
+## 8. Build and commit
 
 ```bash
 npm run build
@@ -540,7 +688,9 @@ The build writes, per plugin:
 
 It stops with a plain message when the manifest names a component the client entry
 does not export, when the server entry has a loader for a page that does not exist, or
-when an endpoint key is malformed. `--no-minify` keeps the client bundle readable.
+when an endpoint key is malformed. Lines that start with `!` are advice that does not
+stop the build, such as a page with no description for search results. Act on them.
+`--no-minify` keeps the client bundle readable.
 
 **Commit `dist/` together with the source change that produced it.** Sites install from
 the repository at an exact commit and refuse any file that does not match the
@@ -553,7 +703,7 @@ Sites accept bundles up to 3 MB for `client.js`, 5 MB for `server.js` and 1 MB f
 **Check:** after `npm run build`, `git status` shows `dist/` changes only if the source
 or manifest changed. Commit them.
 
-## 8. Try it on a site
+## 9. Try it on a site
 
 A site in development accepts a folder on the same machine as a source.
 
@@ -568,13 +718,14 @@ Check these before calling the plugin finished:
 
 - The page's content is in the HTML the server sends (`curl` the address). That is what
   search engines read.
+- Lighthouse gives the page an SEO score of 100 ([step 7](#7-get-the-seo-right)).
 - The settings form makes sense to someone who has never seen the code.
 - The page takes on the site's colours and font, and sits between the site's own
   header and footer.
 - The page still works after the owner changes its address in the dashboard.
 - Nothing in the browser console reports a hydration mismatch.
 
-## 9. Publish and update
+## 10. Publish and update
 
 Push the repository to GitHub. The site's owner connects it under **Sources** by
 pasting its address. All of these forms work:
@@ -634,7 +785,14 @@ layout lines if the repository holds a single plugin at its root.
 This repository is a NextPluggable plugin source. Sites install plugins straight from
 it at an exact commit, using the built files in each plugin's `dist/`.
 Full guide: https://rohittp0.github.io/NextPluggable/build.md
-Read it before creating a plugin or changing a manifest.
+Guide revision this repository follows: 3
+
+At the start of every task in this repository, fetch the guide and compare its
+"Guide revision" with the number above. If the guide is newer, read its "Changes to
+this guide" section, apply every change since the revision above to every plugin
+here (rebuild, raise each changed plugin's version, commit `dist/`), replace this
+block with the guide's current one, and only then start the task. Read the guide
+itself before creating a plugin or changing a manifest.
 
 ### Layout
 
@@ -672,11 +830,59 @@ Read it before creating a plugin or changing a manifest.
 - The server entry must do no work and must not throw when it loads. It is loaded
   during the build and on install.
 - Prefix every CSS class with the plugin's own prefix. There is no style isolation.
-- Take colours from the site: read `--np-accent`, `--np-text`, `--np-muted`,
-  `--np-border` and `--np-surface`, each with a fallback. Never give a colour setting
+- Take colours from the site: read `--np-accent`, `--np-accent-text`, `--np-text`,
+  `--np-muted`, `--np-border` and `--np-surface`, each with a fallback. Never give a colour setting
   a default, never set `font-family`, and never render a header or footer.
 - Settings labels and help text are read by non-technical site owners. Use plain words.
+- SEO is the plugin's job. Every page has a `description` written for search results,
+  exactly one `<h1>`, its content in the server-rendered HTML, structured data that
+  fits it (`jsonLd`), and `noindex` when it offers searchers nothing. Pages with
+  parameters are listed by the `sitemap` hook.
+- A widget never shifts the page, has no headings, renders on the server, and stays
+  small. It runs on every page of the site.
+- Write for AI search too: the main content is in the HTML the server sends, a tool
+  comes with a sentence saying what it does, and the first paragraph answers the
+  question the page is about.
+- Accessible by default: text contrast of 4.5 to 1 (never hard-coded white on the
+  accent; use `--np-accent-text`), a `<label>` for every input, real `<button>` and
+  `<a>` elements, `alt` on images, and no horizontal scrolling on a phone.
 ```
+
+## Changes to this guide
+
+Newest first. Each entry says what to change in plugins written before it.
+
+### Revision 3
+
+SEO became the plugin's job, with defaults from the site.
+
+- Give every page in `plugin.json` a `description` written for search results.
+- Return `jsonLd` that fits each page's content from its loader.
+- Add a `sitemap` function to the server entry of any plugin whose pages have
+  parameters.
+- Return `noindex: true` for pages that offer searchers nothing.
+- Check every widget against the [widget rules](#widgets): no layout shift, no
+  headings, rendered on the server, small.
+- Check every page against the rules [for AI search](#for-ai-search) and
+  [for everyone who uses the page](#for-everyone-who-uses-the-page).
+- Replace hard-coded white text on the accent with `--np-accent-text`, falling back
+  to a colour worked out from the accent ([step 6](#6-style-it)).
+- New, optional loader metadata: `imageAlt`, `type`, `publishedTime`, `modifiedTime`.
+- The build prints advice lines that start with `!`. Clear them.
+
+### Revision 2
+
+Plugins take their look from the site.
+
+- Read `--np-accent`, `--np-text`, `--np-muted`, `--np-border` and `--np-surface`,
+  each with a fallback, in place of colours of your own.
+- Remove the `default` from every colour setting, and apply the owner's colour only
+  when they chose one.
+- Do not set `font-family`, and do not render a header or footer.
+
+### Revision 1
+
+The first version of this guide.
 
 ## Troubleshooting
 
@@ -690,6 +896,7 @@ Read it before creating a plugin or changing a manifest.
 | `The server entry throws when loaded` | Top-level code that fails | Move the work into a loader, a handler or `onInstall` |
 | `Cannot require "x": server bundles may only use Node built-ins at runtime` | A package was left out of the bundle | Import it normally so it is bundled, or drop it |
 | `Building plugins needs esbuild` | `esbuild` is not installed | `npm install --save-dev esbuild` |
+| A build line starting with `!` | Advice for search engines, such as a page with no `description` | Fix what it names. The build still succeeds |
 | The dashboard says the source "does not look like a plugin source" | No `nextpluggable.json` and no built plugin at the top level | Add the index file, or build and commit `dist/` |
 | "This plugin has not been built yet" | `dist/build.json` is missing for a listed folder | Build and commit |
 | "This plugin failed its integrity check" | `dist/` was edited by hand, or is stale | Rebuild and commit `dist/` unchanged |
@@ -703,8 +910,10 @@ Read it before creating a plugin or changing a manifest.
 - [ ] `dist/` is committed and matches the source.
 - [ ] The plugin installs on a site from the repository, and its page, widgets and
       settings work.
-- [ ] The page's content is in the server-rendered HTML.
-- [ ] `CLAUDE.md` holds the block above.
+- [ ] The page's content is in the server-rendered HTML, and Lighthouse gives it an SEO
+      score of 100.
+- [ ] Widgets cause no layout shift on the site's other pages.
+- [ ] `CLAUDE.md` holds the block above, with the current guide revision.
 
 The two reference plugins are worth reading:
 [EMI Calculator](https://github.com/rohittp0/NextPluggable/tree/main/plugins/emi-calculator),

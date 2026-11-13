@@ -91,6 +91,13 @@ export default np.PluginPage;
       'Your app has a root loading file. While plugin pages are uncached (the default), it makes addresses that do not exist return "200 OK" with a noindex tag instead of a 404. To get real 404s, switch on caching in the catch-all route (see the comment in that file) or move the loading file into a route group.',
     );
 
+  const sitemap = ['ts', 'tsx', 'js', 'jsx'].map((ext) => path.join(appDir, `sitemap.${ext}`)).find((f) => existsSync(f));
+  result.notes.push(
+    sitemap
+      ? `List plugin pages in your sitemap: add \`...(await np.sitemap())\` to the entries ${rel(sitemap)} returns.`
+      : 'Your site has no sitemap. To list plugin pages for search engines, create app/sitemap.ts that returns `await np.sitemap()` along with your own pages.',
+  );
+
   // Secrets for local development.
   const envFile = path.join(root, '.env.local');
   const env = existsSync(envFile) ? await readFile(envFile, 'utf8') : '';

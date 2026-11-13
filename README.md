@@ -139,11 +139,14 @@ This repository is itself a plugin source with two reference plugins:
   plugin page is requested, the site server-renders the plugin's component inside the
   page using its own React, then the browser loads the same bundle as a normal script
   and hydrates. Plugin code is never part of the site's build.
-- **SEO.** Plugin pages are real server-rendered HTML with their own title,
-  description, canonical link, Open Graph tags and structured data. Addresses no plugin
-  owns return a real 404.
+- **SEO.** Plugin pages are real server-rendered HTML, complete for search engines by
+  default: their own title, description, canonical link, Open Graph and Twitter tags,
+  structured data, and an entry in the sitemap (`np.sitemap()`). A plugin can say more;
+  it never has to say anything. Addresses no plugin owns return a real 404.
 - **Speed and cost.** Sharing the site's React keeps plugin bundles small (the EMI
-  calculator is 5 kB). By default plugin pages are rendered on each request, which is
+  calculator is 5 kB). A plugin's stylesheet is written into the page and its script
+  loads without blocking, so a widget on every page adds no request the browser waits
+  for. By default plugin pages are rendered on each request, which is
   always correct. They can instead be cached like static pages and refreshed the moment
   anything changes in the dashboard; see [Caching plugin pages](#caching-plugin-pages).
 - **Safety net.** A plugin that crashes while rendering is contained: a broken widget

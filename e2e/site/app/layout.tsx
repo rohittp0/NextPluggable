@@ -4,8 +4,12 @@ import { np } from '@/lib/nextpluggable';
 import './globals.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
   title: { default: 'Harbor Lending', template: '%s · Harbor Lending' },
   description: 'The site the NextPluggable browser test runs against.',
+  // Site-wide sharing defaults. Plugin pages keep the image and site name, never this title or description.
+  openGraph: { siteName: 'Harbor Lending', title: 'Harbor Lending', description: 'Home loans, explained plainly.', images: ['/og-default.png'] },
+  twitter: { card: 'summary_large_image', title: 'Harbor Lending', description: 'Home loans, explained plainly.', images: ['/og-default.png'] },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

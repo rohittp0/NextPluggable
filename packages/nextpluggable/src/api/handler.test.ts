@@ -8,7 +8,10 @@ import path from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildPlugin } from '@nextpluggable/plugin/build';
 import { passwordAuth } from '../auth/password.js';
-import { resolveConfig, type NextPluggableConfig } from '../config.js';
+import { resolveConfig, type NextPluggableConfig, type ResolvedConfig } from '../config.js';
+import { prepareClient } from '../core/runtime.js';
+import { pluginSitemap } from '../core/sitemap.js';
+import { getInstalledPlugins } from '../core/state.js';
 import { globals } from '../globals.js';
 import { memoryStorage } from '../storage/memory.js';
 import type { StorageAdapter } from '../storage/types.js';
@@ -61,6 +64,7 @@ async function writeIndex(dirs: string[]) {
 
 interface Site {
   storage: StorageAdapter;
+  config: () => ResolvedConfig;
   handle: (request: Request) => Promise<Response>;
   changes: number;
   cookie: string;
@@ -72,18 +76,16 @@ interface Site {
 async function site(overrides: NextPluggableConfig = {}): Promise<Site> {
   const storage = memoryStorage();
   const self = { storage, changes: 0, cookie: '' } as Site;
-  self.handle = createHandler(
-    resolveConfig({
-      storage,
-      secret: 'unit-test-secret-0123456789',
-      auth: passwordAuth({ password: PASSWORD }),
-      siteUrl: ORIGIN,
-      allowLocalSources: true,
-      cacheTtlMs: 0,
-      ...overrides,
-    }),
-    { onSiteChange: () => void self.changes++ },
-  );
+  self.config = resolveConfig({
+    storage,
+    secret: 'unit-test-secret-0123456789',
+    auth: passwordAuth({ password: PASSWORD }),
+    siteUrl: ORIGIN,
+    allowLocalSources: true,
+    cacheTtlMs: 0,
+    ...overrides,
+  });
+  self.handle = createHandler(self.config, { onSiteChange: () => void self.changes++ });
   self.call = async (method, p, body, options = {}) => {
     const headers: Record<string, string> = { host: 'site.test', ...options.headers };
     if (options.csrf !== false) headers['x-nextpluggable'] = '1';
@@ -589,3 +591,95 @@ describe('removing', () => {
     expect(await s.storage.list('files/')).toEqual([]);
   });
 });
+
+describe('sitemap of plugin pages', () => {
+  const SHOP = `export default {
+  pages: {
+    main: () => ({ metadata: { modifiedTime: '2026-03-04T00:00:00Z' } }),
+    thanks: () => ({ metadata: { noindex: true } }),
+    old: () => ({ redirect: '/shop' }),
+    gone: () => ({ notFound: true }),
+    mirror: () => ({ metadata: { canonical: '/shop' } }),
+  },
+  sitemap: () => ['/shop/item/red-shoe', { path: '/shop/item/blue-hat', lastModified: '2026-02-01' }, '/about', '/shop/item', 42, 'not-a-path'],
+};`;
+  const pages = [
+    { id: 'main', path: '/shop', component: 'Main', title: 'Shop' },
+    { id: 'thanks', path: '/shop/thanks', component: 'Main', title: 'Thanks' },
+    { id: 'old', path: '/shop/old', component: 'Main', title: 'Old' },
+    { id: 'gone', path: '/shop/gone', component: 'Main', title: 'Gone' },
+    { id: 'mirror', path: '/shop/mirror', component: 'Main', title: 'Mirror' },
+    { id: 'item', path: '/shop/item/:slug', component: 'Main', title: 'Item' },
+  ];
+
+  async function shop() {
+    await writePlugin({ id: 'shop', manifest: { pages }, server: SHOP });
+    await writeIndex(['alpha', 'shop']);
+    const s = await site();
+    const sourceId = await s.connect();
+    expect((await s.call('POST', '/admin/install', { sourceId, path: 'shop' })).status).toBe(200);
+    return { s, sourceId };
+  }
+
+  it('lists fixed pages that may be indexed, and the addresses the plugin itself lists', async () => {
+    const { s } = await shop();
+    const urls = (await pluginSitemap(s.config())).map((e) => e.url).sort();
+    // Left out: the thank-you page (noindex), the redirect, the missing page, the page whose canonical is elsewhere,
+    // and listed addresses that are not this plugin's pages.
+    expect(urls).toEqual([`${ORIGIN}/shop`, `${ORIGIN}/shop/item/blue-hat`, `${ORIGIN}/shop/item/red-shoe`]);
+  });
+
+  it('carries the dates pages were last changed', async () => {
+    const { s } = await shop();
+    const byUrl = Object.fromEntries((await pluginSitemap(s.config())).map((e) => [e.url, e.lastModified?.toISOString()]));
+    expect(byUrl[`${ORIGIN}/shop`]).toBe('2026-03-04T00:00:00.000Z');
+    expect(byUrl[`${ORIGIN}/shop/item/blue-hat`]).toBe('2026-02-01T00:00:00.000Z');
+    expect(byUrl[`${ORIGIN}/shop/item/red-shoe`]).toBeUndefined();
+  });
+
+  it('follows the address the owner chose, and drops a plugin that is switched off', async () => {
+    const { s } = await shop();
+    expect((await s.call('PATCH', '/admin/plugins/shop', { paths: { main: '/store' } })).status).toBe(200);
+    expect((await pluginSitemap(s.config())).map((e) => e.url)).toContain(`${ORIGIN}/store`);
+    await s.call('PATCH', '/admin/plugins/shop', { enabled: false });
+    expect(await pluginSitemap(s.config())).toEqual([]);
+  });
+
+  it('keeps everything else when a plugin fails to list its pages, and never throws', async () => {
+    await writePlugin({ id: 'broken', server: `export default { pages: {}, sitemap: () => { throw new Error('no database'); } };` });
+    await writeIndex(['alpha', 'broken']);
+    const s = await site();
+    const sourceId = await s.connect();
+    for (const p of ['alpha', 'broken']) await s.call('POST', '/admin/install', { sourceId, path: p });
+    // The failing plugin keeps its fixed page; only the addresses it could not list are missing.
+    expect((await pluginSitemap(s.config())).map((e) => e.url).sort()).toEqual([`${ORIGIN}/alpha`, `${ORIGIN}/broken`]);
+    const failing = { ...s.config(), storage: { ...s.storage, get: async () => Promise.reject(new Error('storage is down')) } };
+    globals().state.clear();
+    expect(await pluginSitemap(failing)).toEqual([]);
+  });
+});
+
+describe('plugin styles', () => {
+  async function styled(overrides: NextPluggableConfig = {}) {
+    await mkdir(path.join(sourceDir, 'styled/src'), { recursive: true });
+    await writeFile(path.join(sourceDir, 'styled/src/style.css'), '.styled { color: red }');
+    await writePlugin({ id: 'styled', client: `import './style.css';\nexport function Main() { return null; }` });
+    await writeIndex(['styled']);
+    const s = await site(overrides);
+    await s.call('POST', '/admin/install', { sourceId: await s.connect(), path: 'styled' });
+    return prepareClient(s.config(), (await getInstalledPlugins(s.config())).styled!);
+  }
+
+  it('are handed to the page to be written inline, so a plugin adds no request the browser waits for', async () => {
+    const assets = await styled();
+    expect(assets?.styleCss).toContain('.styled');
+    expect(assets?.styleHref).toMatch(/\/assets\/styled\/[0-9a-f]{16}\/style\.css$/);
+  });
+
+  it('stay linked on a site that turns inline styles off', async () => {
+    const assets = await styled({ inlineStyles: false });
+    expect(assets?.styleCss).toBeUndefined();
+    expect(assets?.styleHref).toBeDefined();
+  });
+});
+

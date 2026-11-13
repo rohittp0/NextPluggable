@@ -4,7 +4,7 @@
     "manifestVersion": 1,
     "id": "emi-calculator",
     "name": "EMI Calculator",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "A loan EMI calculator page with a yearly repayment schedule. Visitors adjust amount, interest rate and tenure and see their monthly instalment instantly.",
     "author": "NextPluggable",
     "icon": "🧮",
@@ -15,7 +15,7 @@
         "path": "/emi-calculator",
         "component": "CalculatorPage",
         "title": "EMI Calculator",
-        "description": "The calculator page your visitors use."
+        "description": "Work out a loan's monthly instalment, the total interest, and a yearly repayment schedule."
       }
     ],
     "settings": [
@@ -131,13 +131,13 @@
   "files": {
     "client": {
       "path": "dist/client.js",
-      "sha256": "14d8ac854659efe82aa6d0265bc3c6ca19eee3986a3285d82cd508706a448235",
+      "sha256": "50c7658b3cce4d7faefa7443003946db056c2a25eea1275e4d1d5d57c1570323",
       "bytes": 5109
     },
     "style": {
       "path": "dist/style.css",
-      "sha256": "105caebdd1563ca9e622dcdafc291b20eaeaeff7d61cdc016dbb1f13c9875db5",
-      "bytes": 4531
+      "sha256": "8cd2a22bfddfe42659f7c5817ff1b75f74f67bfdccadb7624db62661484abbbe",
+      "bytes": 4753
     },
     "server": {
       "path": "dist/server.js",

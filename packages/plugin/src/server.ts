@@ -42,14 +42,33 @@ export interface PageContext<C = Record<string, unknown>> extends PluginContext<
   params: Record<string, string>;
 }
 
+/**
+ * How a page presents itself to search engines and when shared. Everything is
+ * optional: the site fills in whatever is left out (the page's title and
+ * description from the manifest, a canonical link to the page itself, the
+ * site's own sharing image), so a page is complete without any of this.
+ */
 export interface PageMetadata {
   title?: string;
+  /** One or two sentences for search results. About 150 characters. */
   description?: string;
   /** Absolute or site-relative canonical URL. Defaults to the page's own address. */
   canonical?: string;
+  /** Absolute or site-relative image shown when the page is shared. Defaults to the site's own. */
   image?: string;
+  /** What the image shows, for people who cannot see it. Defaults to the title. */
+  imageAlt?: string;
+  /** `article` for a dated piece of writing (a post, a news item). Default `website`. */
+  type?: 'website' | 'article';
+  /** For articles: ISO dates of first publication and last change. */
+  publishedTime?: string;
+  modifiedTime?: string;
+  /** Keep the page out of search engines (a thank-you page, a preview). */
   noindex?: boolean;
 }
+
+/** One address for the site's sitemap: a path, or a path with the ISO date it last changed. */
+export type SitemapEntry = string | { path: string; lastModified?: string };
 
 export interface PageResult<P = Record<string, unknown>> {
   /** Passed to the page component as `data`. Must be JSON-serialisable. */
@@ -80,6 +99,13 @@ export interface PluginServer<C = Record<string, unknown>> {
   pages?: Record<string, PageLoader<C>>;
   /** HTTP endpoints keyed by `"METHOD /path"`, e.g. `"POST /messages"` or `"GET /items/:id"`. */
   api?: Record<string, ApiHandler<C>>;
+  /**
+   * The addresses of this plugin's pages that have parameters (`/shop/:slug`), for the
+   * site's sitemap: one entry per product, article and so on. Pages with a fixed
+   * address are listed by the site already. Addresses that do not belong to one of
+   * the plugin's pages are ignored.
+   */
+  sitemap?(ctx: PluginContext<C>): SitemapEntry[] | Promise<SitemapEntry[]>;
   onInstall?(ctx: PluginContext<C>): void | Promise<void>;
   onUninstall?(ctx: PluginContext<C>): void | Promise<void>;
 }
