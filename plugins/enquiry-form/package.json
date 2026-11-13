@@ -1,0 +1,16 @@
+{
+  "name": "@nextpluggable-plugins/enquiry-form",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nextpluggable-plugin build",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@nextpluggable/plugin": "workspace:*",
+    "@types/react": "^19.2.0",
+    "esbuild": "^0.28.2",
+    "react": "^19.2.0"
+  }
+}

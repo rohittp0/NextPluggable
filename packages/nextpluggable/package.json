@@ -1,0 +1,31 @@
+{
+  "name": "nextpluggable",
+  "version": "0.1.0",
+  "description": "WordPress-style plugins for Next.js: a dashboard where site owners install full-featured plugins from GitHub repositories, with no rebuild.",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "nextpluggable": "./bin/nextpluggable.js" },
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
+  "files": ["dist", "bin"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@nextpluggable/plugin": "workspace:*"
+  },
+  "peerDependencies": {
+    "next": ">=15.0.0",
+    "react": ">=19.0.0",
+    "react-dom": ">=19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
+}

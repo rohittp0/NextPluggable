@@ -1,0 +1,34 @@
+{
+  "manifestVersion": 1,
+  "id": "enquiry-form",
+  "name": "Enquiry Form",
+  "version": "1.0.0",
+  "description": "A contact page that collects enquiries from visitors, an inbox in this dashboard to follow them up, and an optional floating button on every page.",
+  "author": "NextPluggable",
+  "icon": "✉️",
+  "category": "Forms",
+  "pages": [
+    {
+      "id": "form",
+      "path": "/contact",
+      "component": "EnquiryPage",
+      "title": "Contact us",
+      "description": "The page with the enquiry form."
+    }
+  ],
+  "slots": [{ "slot": "body.end", "component": "EnquiryButton" }],
+  "admin": [{ "id": "inbox", "title": "Enquiries", "component": "EnquiryInbox" }],
+  "permissions": ["storage", "fetch:*"],
+  "settings": [
+    { "key": "heading", "label": "Page heading", "type": "text", "default": "Talk to us", "required": true, "group": "Content" },
+    { "key": "intro", "label": "Introduction", "type": "textarea", "default": "Leave your details and we will get back to you within one working day.", "group": "Content" },
+    { "key": "submitLabel", "label": "Button text", "type": "text", "default": "Send enquiry", "required": true, "group": "Content" },
+    { "key": "successMessage", "label": "Thank-you message", "type": "textarea", "default": "Thank you. We have received your enquiry and will be in touch soon.", "required": true, "group": "Content" },
+    { "key": "askPhone", "label": "Ask for a phone number", "type": "toggle", "default": true, "group": "Form" },
+    { "key": "requireMessage", "label": "Make the message compulsory", "type": "toggle", "default": false, "group": "Form" },
+    { "key": "floatingButton", "label": "Show a floating button on every page", "type": "toggle", "default": true, "help": "A small button in the corner of the screen that takes visitors to the form.", "group": "Floating button" },
+    { "key": "floatingLabel", "label": "Floating button text", "type": "text", "default": "Get in touch", "group": "Floating button" },
+    { "key": "accent", "label": "Accent colour", "type": "color", "default": "#0f766e", "group": "Appearance" },
+    { "key": "webhookUrl", "label": "Notification webhook", "type": "secret", "placeholder": "https://hooks.slack.com/services/…", "help": "Optional. Each new enquiry is also sent to this address, for example a Slack, Zapier or Make webhook.", "group": "Notifications" }
+  ]
+}
