@@ -157,6 +157,23 @@ describe('adapters', () => {
     }
   });
 
+  it('upstash goes around the fetch wrapper Next.js installs, so storage reads never stop a page being prerendered', async () => {
+    const real = globalThis.fetch;
+    const { fetchImpl } = fakeUpstash();
+    const wrapped = (async () => {
+      throw new Error('Dynamic server usage');
+    }) as unknown as typeof fetch & { _nextOriginalFetch?: typeof fetch };
+    wrapped._nextOriginalFetch = fetchImpl;
+    globalThis.fetch = wrapped;
+    try {
+      const storage = upstashStorage({ url: 'https://fake.upstash.io', token: 'test-token' });
+      await storage.set('k', 'v');
+      expect(await storage.get('k')).toBe('v');
+    } finally {
+      globalThis.fetch = real;
+    }
+  });
+
   it('postgres refuses a table name that is not an identifier', () => {
     expect(() => postgresStorage({ query: async () => [], table: 'kv; DROP TABLE users' })).toThrow('Invalid table name');
   });

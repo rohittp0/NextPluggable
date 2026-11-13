@@ -1,10 +1,10 @@
-// End-to-end test: drives the example site in a real browser the way a site
-// owner would, against a mock GitHub API.
+// End-to-end test: drives a small Next.js site (e2e/site) in a real browser the
+// way a site owner would, against a mock GitHub API.
 //
 //   pnpm build && pnpm e2e
 //
-// Runs against the example as committed (plugin pages rendered per request).
-// With --cached it first switches on the optional page caching in the example's
+// Runs against that site as committed (plugin pages rendered per request).
+// With --cached it first switches on the optional page caching in the site's
 // catch-all route, so that mode is exercised too; the file is restored afterwards.
 //
 import { spawn, spawnSync } from 'node:child_process';
@@ -14,15 +14,16 @@ import { createServer } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PRIVATE_TOKEN, startMockGitHub } from './mock-github.mjs';
+import { PRIVATE_TOKEN, nextPatch, startMockGitHub } from './mock-github.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const site = path.join(root, 'examples/site');
+const site = path.join(root, 'e2e/site');
 const nextBin = path.join(site, 'node_modules/next/dist/bin/next');
 const PASSWORD = 'e2e-password';
 const cached = process.argv.includes('--cached');
 const routeFile = path.join(site, 'app/[...slug]/page.tsx');
 const routeSource = await readFile(routeFile, 'utf8');
+const emiNext = nextPatch(JSON.parse(await readFile(path.join(root, 'plugins/emi-calculator/plugin.json'), 'utf8')).version);
 
 let chromium;
 try {
@@ -73,10 +74,10 @@ const env = {
   NEXT_TELEMETRY_DISABLED: '1',
 };
 
-console.log(`Building the example site (${cached ? 'plugin pages cached' : 'plugin pages rendered per request'})…`);
+console.log(`Building the test site (${cached ? 'plugin pages cached' : 'plugin pages rendered per request'})…`);
 if (cached) {
   const enabled = routeSource.replace('// export const generateStaticParams', 'export const generateStaticParams').replace('// export const revalidate', 'export const revalidate');
-  if (enabled === routeSource) throw new Error('Could not find the caching lines to switch on in the example route.');
+  if (enabled === routeSource) throw new Error('Could not find the caching lines to switch on in the test site route.');
   await writeFile(routeFile, enabled);
 }
 const built = spawnSync(process.execPath, [nextBin, 'build'], { cwd: site, env, stdio: ['ignore', 'ignore', 'inherit'] });
@@ -219,6 +220,12 @@ try {
       `<link rel="canonical" href="${base}/emi-calculator"/>`,
       '<meta name="description" content="Work out your monthly instalment',
       'property="og:title" content="EMI Calculator"',
+      // Sharing previews describe this page, and keep the image and name the site declares for all its pages.
+      'name="twitter:title" content="EMI Calculator"',
+      'name="twitter:description" content="Work out your monthly instalment',
+      'property="og:site_name" content="Harbor Lending"',
+      `property="og:image" content="${base}/og-default.png"`,
+      `name="twitter:image" content="${base}/og-default.png"`,
       '"@type":"WebApplication"',
       '<h1>EMI Calculator</h1>',
       '₹21,696', // the computed instalment is in the HTML, not filled in by JavaScript
@@ -226,6 +233,22 @@ try {
       'HOST-HEADER-MARK',
     ])
       expect(body.includes(needle), `missing from server HTML: ${needle}`);
+    expect(!body.includes('content="Harbor Lending" name="twitter:title"') && !/name="twitter:title" content="Harbor Lending"/.test(body), 'the site-wide title must not describe a plugin page');
+    expect((body.match(/<h1[\s>]/g) ?? []).length === 1, 'a page has exactly one h1');
+    // Not streamed into the body: tools and crawlers that only read <head> must find them.
+    const head = body.slice(0, body.indexOf('</head>'));
+    for (const tag of ['<title>', 'name="description"', 'rel="canonical"', 'property="og:title"'])
+      expect(head.includes(tag), `${tag} should be inside <head>, for every visitor`);
+  });
+  await step('its styles are part of the page, so nothing holds up the first paint', async () => {
+    const { body } = await html('/emi-calculator');
+    expect(/<style[^>]*>[^<]*\.npemi/.test(body), 'the plugin stylesheet should be written into the page');
+    expect(!/<link[^>]+rel="stylesheet"[^>]+assets\/emi-calculator/.test(body), 'the plugin stylesheet must not be a request the browser waits for');
+  });
+  await step('its page is listed in the sitemap', async () => {
+    const { status, body } = await html('/sitemap.xml');
+    expect(status === 200, `sitemap status ${status}`);
+    for (const url of [`${base}/about`, `${base}/emi-calculator`]) expect(body.includes(`<loc>${url}</loc>`), `the sitemap should list ${url}`);
   });
   if (cached)
     await step('the page is cached like a static page, yet was live the moment it was installed', async () => {
@@ -279,9 +302,9 @@ try {
     github.advance();
     await page.goto(dash);
     await page.click('button:has-text("Check for updates")');
-    await page.click('button:has-text("Update to 1.0.1")');
-    await toast('EMI Calculator was updated to version 1.0.1.');
-    await page.waitForSelector('.np-row:has-text("EMI Calculator") >> text=v1.0.1');
+    await page.click(`button:has-text("Update to ${emiNext}")`);
+    await toast(`EMI Calculator was updated to version ${emiNext}.`);
+    await page.waitForSelector(`.np-row:has-text("EMI Calculator") >> text=v${emiNext}`);
     const { status, body } = await html('/loan-calculator');
     expect(status === 200 && body.includes('<h1>Home Loan Calculator</h1>'), 'settings and address must survive the update');
   });
@@ -381,6 +404,8 @@ export default {
       return { data: article, metadata: { title: article.title, description: article.body, noindex: Boolean(article.draft), image: '/og/' + params.slug + '.png' } };
     },
   },
+  // Pages with parameters are listed by the plugin; an address that is not its own is ignored.
+  sitemap: () => ['/kb/getting-started', '/about-us-not-mine'],
 };`,
     );
     await buildPlugin(kbDir);
@@ -398,6 +423,12 @@ export default {
     for (const needle of ['<h1>Getting started</h1>', 'Welcome aboard.', '<title>Getting started · Harbor Lending</title>', `property="og:image" content="${base}/og/getting-started.png"`, `rel="canonical" href="${base}/kb/getting-started"`])
       expect(article.body.includes(needle), `missing from the article HTML: ${needle}`);
     expect(!/name="robots" content="noindex/.test(article.body), 'a public article must be indexable');
+    // The plugin gave no structured data, so the site describes the page itself.
+    expect(article.body.includes('"@type":"WebPage","name":"Getting started"'), 'a page without structured data of its own gets a default');
+    expect(article.body.includes('name="twitter:card" content="summary_large_image"') && article.body.includes(`name="twitter:image" content="${base}/og/getting-started.png"`), 'the page\'s own image is used for sharing');
+    const map = (await html('/sitemap.xml')).body;
+    expect(map.includes(`<loc>${base}/kb/getting-started</loc>`), 'addresses the plugin lists belong in the sitemap');
+    expect(!map.includes('about-us-not-mine'), 'a plugin cannot add addresses that are not its pages');
     const draft = await html('/kb/secret-draft');
     expect(draft.status === 200 && /name="robots" content="noindex, nofollow"/.test(draft.body), 'a page marked noindex must say so');
   });
@@ -552,6 +583,7 @@ export function ServerShy() { return createElement('span', { id: 'server-shy' },
     await page.check('[role=dialog] >> text=Also delete everything');
     await page.click('[role=dialog] button:has-text("Remove")');
     await toast('Enquiry Form was removed.');
+    expect(!(await html('/sitemap.xml')).body.includes(`${base}/contact`), 'a removed page leaves the sitemap');
     const { readdir } = await import('node:fs/promises');
     const left = await readdir(path.join(dataDir, 'data', 'enquiry-form')).catch(() => []);
     expect(left.length === 0, `plugin data left behind: ${left.join(', ')}`);

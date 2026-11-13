@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "emi-calculator",
   "name": "EMI Calculator",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "A loan EMI calculator page with a yearly repayment schedule. Visitors adjust amount, interest rate and tenure and see their monthly instalment instantly.",
   "author": "NextPluggable",
   "icon": "🧮",
@@ -13,7 +13,7 @@
       "path": "/emi-calculator",
       "component": "CalculatorPage",
       "title": "EMI Calculator",
-      "description": "The calculator page your visitors use."
+      "description": "Work out a loan's monthly instalment, the total interest, and a yearly repayment schedule."
     }
   ],
   "settings": [
@@ -28,6 +28,6 @@
     { "key": "defaultRate", "label": "Starting interest rate (% per year)", "type": "number", "default": 8.5, "min": 0, "max": 40, "step": 0.05, "group": "Numbers" },
     { "key": "defaultYears", "label": "Starting tenure (years)", "type": "number", "default": 20, "min": 1, "max": 40, "group": "Numbers" },
     { "key": "showSchedule", "label": "Show yearly repayment schedule", "type": "toggle", "default": true, "group": "Appearance" },
-    { "key": "accent", "label": "Accent colour", "type": "color", "default": "#2563eb", "group": "Appearance" }
+    { "key": "accent", "label": "Accent colour", "type": "color", "placeholder": "Your site's colour", "help": "Leave empty to use your site's own colour.", "group": "Appearance" }
   ]
 }

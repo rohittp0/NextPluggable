@@ -3,8 +3,8 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { buildPlugin, describeBuildError } from './build.js';
-import { validateBuild } from './manifest.js';
+import { buildPlugin, describeBuildError, seoAdvice } from './build.js';
+import { validateBuild, validateManifest } from './manifest.js';
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -89,3 +89,30 @@ describe('buildPlugin', () => {
     expect(describeBuildError(error)).toContain(message);
   });
 });
+
+describe('advice for search engines', () => {
+  const pages = (page: object) => validateManifest(JSON.parse(manifest({ pages: [{ id: 'main', path: '/fixture', component: 'Main', title: 'Fixture', ...page }] })));
+
+  it('points out a page with nothing of its own to show in search results', () => {
+    expect(seoAdvice(pages({}))).toEqual([expect.stringContaining('Page "main" has no "description"')]);
+    expect(seoAdvice(pages({ description: 'Compare loans side by side.' }))).toEqual([]);
+  });
+
+  it('points out titles and descriptions that search engines would cut short', () => {
+    const advice = seoAdvice(pages({ title: 'T'.repeat(80), description: 'D'.repeat(240) }));
+    expect(advice).toEqual([expect.stringContaining('description of 240 characters'), expect.stringContaining('title of 80 characters')]);
+  });
+
+  it('is reported by the build without failing it', async () => {
+    const dir = await fixture({ 'plugin.json': manifest(), 'src/client.tsx': CLIENT, 'src/style.css': '.fx{color:red}' });
+    const warnings: string[] = [];
+    await buildPlugin(dir, { warn: (line) => warnings.push(line) });
+    expect(warnings).toEqual([expect.stringContaining('has no "description"')]);
+  });
+
+  it('refuses a sitemap that is not a function', async () => {
+    const dir = await fixture({ 'plugin.json': manifest(), 'src/client.tsx': CLIENT, 'src/style.css': '.fx{color:red}', 'src/server.js': `export default { sitemap: ['/fixture'] };` });
+    await expect(buildPlugin(dir)).rejects.toThrow('`sitemap` in the server entry must be a function');
+  });
+});
+

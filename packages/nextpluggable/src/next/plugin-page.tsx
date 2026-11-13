@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { cache, type ReactNode } from 'react';
 import type { PluginInfo } from '@nextpluggable/plugin';
@@ -9,6 +9,8 @@ import { prepareClient, publicConfig, runPageLoader } from '../core/runtime.js';
 import { getInstalledPlugins, invalidateInstalledPlugins } from '../core/state.js';
 import { PluginGoneError } from '../errors.js';
 import type { InstallRecord } from '../core/types.js';
+import { pageJsonLd, pageMetadata, pageSeo } from './seo.js';
+import { PluginStyle } from './style.js';
 
 type RouteParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -57,29 +59,17 @@ export function createPluginPage(getConfig: () => ResolvedConfig) {
   // route can be statically cached as well as rendered per request.
   const resolveRequest = async (props: PluginPageProps) => run(await pathnameOf(props.params));
 
-  async function generatePluginMetadata(props: PluginPageProps): Promise<Metadata> {
+  /**
+   * Metadata for the plugin page at the requested address. Pass Next.js's second
+   * `generateMetadata` argument through as `parent`, so a page without a sharing
+   * image of its own keeps the site's.
+   */
+  async function generatePluginMetadata(props: PluginPageProps, parent?: ResolvingMetadata): Promise<Metadata> {
     const loaded = await resolveRequest(props);
     if (!loaded || loaded.result.notFound || loaded.result.redirect) return {};
     const cfg = getConfig();
-    const meta = loaded.result.metadata ?? {};
-    const title = meta.title ?? loaded.match.page.title;
-    const description = meta.description ?? loaded.match.page.description;
-    const absolute = (value: string) => {
-      try {
-        return new URL(value, cfg.siteUrl).toString();
-      } catch {
-        return undefined;
-      }
-    };
-    const canonical = absolute(meta.canonical ?? loaded.pathname);
-    const image = meta.image ? absolute(meta.image) : undefined;
-    return {
-      title,
-      description,
-      alternates: canonical ? { canonical } : undefined,
-      openGraph: { title, description, url: canonical, type: 'website', images: image ? [image] : undefined },
-      robots: meta.noindex ? { index: false, follow: false } : undefined,
-    };
+    const inherited = parent ? await Promise.resolve(parent).catch(() => null) : null;
+    return pageMetadata(cfg, pageSeo(cfg, loaded.match.install, loaded.match.page, loaded.pathname, loaded.result), inherited);
   }
 
   /**
@@ -92,10 +82,10 @@ export function createPluginPage(getConfig: () => ResolvedConfig) {
     const { match, result, pathname, assets } = loaded;
     if (result.redirect) redirect(result.redirect);
     const cfg = getConfig();
-    const jsonLd = result.jsonLd ? (Array.isArray(result.jsonLd) ? result.jsonLd : [result.jsonLd]) : [];
+    const jsonLd = pageJsonLd(cfg, pageSeo(cfg, match.install, match.page, pathname, result), result);
     return (
       <>
-        {assets.styleHref ? <link rel="stylesheet" href={assets.styleHref} precedence="nextpluggable" /> : null}
+        <PluginStyle assets={assets} />
         {jsonLd.map((item, i) => (
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(item).replace(/</g, '\\u003c') }} />
         ))}
@@ -112,5 +102,14 @@ export function createPluginPage(getConfig: () => ResolvedConfig) {
     );
   }
 
-  return { PluginPage, generatePluginMetadata };
+  /**
+   * Whether an installed, switched-on plugin serves a page at this address. For sites
+   * whose own catch-all route has to choose between a plugin page and something of its
+   * own: unlike `PluginPage`, it never triggers the site's 404.
+   */
+  async function hasPluginPage(pathname: string): Promise<boolean> {
+    return findPage(await getInstalledPlugins(getConfig()), normalizePathname(pathname)) !== null;
+  }
+
+  return { PluginPage, generatePluginMetadata, hasPluginPage };
 }

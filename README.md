@@ -9,9 +9,15 @@ Plugins are full features, not UI snippets. One plugin can add server-rendered p
 that search engines index, HTTP endpoints, stored data, widgets in the site's layout,
 a settings form, and its own screens inside the dashboard.
 
-> **Status: working prototype, not yet published to npm.** Everything described here is
+> **Status: working prototype.** Everything described here is
 > implemented and covered by tests in this repository. See [Limits](#limits) before
 > relying on it, and [docs/research.md](docs/research.md) for why it is built this way.
+
+**Documentation: <https://rohittp0.github.io/NextPluggable/>.** Each guide also exists
+as Markdown written for coding agents: give yours
+[`integrate.md`](https://rohittp0.github.io/NextPluggable/integrate.md) to add
+NextPluggable to a site, or
+[`build.md`](https://rohittp0.github.io/NextPluggable/build.md) to write plugins.
 
 ## What the site owner does
 
@@ -42,6 +48,15 @@ ones:
 | `app/[...slug]/page.tsx` | Serves the pages plugins add. Your own routes always win; unknown addresses still get your 404 page. Optional page caching is two commented lines in this file |
 
 It also writes a generated dashboard password and secret to `.env.local`.
+
+If the site already has a root catch-all route, `init` leaves it alone. Serve plugin
+pages from it yourself: render `<np.PluginPage params={params} />` where your own lookup
+finds nothing, or, when that route never returns a 404 (a landing page for any address,
+say), ask first:
+
+```tsx
+if (await np.hasPluginPage(`/${segments.join('/')}`)) return <np.PluginPage params={params} />;
+```
 
 Optionally, mark places in your layout that plugins may fill:
 
@@ -109,7 +124,7 @@ npx nextpluggable-plugin build
 
 A repository can hold one plugin at its root, or several listed in a root
 `nextpluggable.json`. Hosts install straight from the repository at an exact commit.
-The full guide is in [docs/writing-plugins.md](docs/writing-plugins.md).
+The full guide is in [docs/build.md](docs/build.md).
 
 This repository is itself a plugin source with two reference plugins:
 
@@ -124,11 +139,14 @@ This repository is itself a plugin source with two reference plugins:
   plugin page is requested, the site server-renders the plugin's component inside the
   page using its own React, then the browser loads the same bundle as a normal script
   and hydrates. Plugin code is never part of the site's build.
-- **SEO.** Plugin pages are real server-rendered HTML with their own title,
-  description, canonical link, Open Graph tags and structured data. Addresses no plugin
-  owns return a real 404.
+- **SEO.** Plugin pages are real server-rendered HTML, complete for search engines by
+  default: their own title, description, canonical link, Open Graph and Twitter tags,
+  structured data, and an entry in the sitemap (`np.sitemap()`). A plugin can say more;
+  it never has to say anything. Addresses no plugin owns return a real 404.
 - **Speed and cost.** Sharing the site's React keeps plugin bundles small (the EMI
-  calculator is 5 kB). By default plugin pages are rendered on each request, which is
+  calculator is 5 kB). A plugin's stylesheet is written into the page and its script
+  loads without blocking, so a widget on every page adds no request the browser waits
+  for. By default plugin pages are rendered on each request, which is
   always correct. They can instead be cached like static pages and refreshed the moment
   anything changes in the dashboard; see [Caching plugin pages](#caching-plugin-pages).
 - **Safety net.** A plugin that crashes while rendering is contained: a broken widget
@@ -220,21 +238,9 @@ SDK only makes it available in the browser.
 | `packages/nextpluggable` | The package sites install: dashboard, sign-in, storage, GitHub sources, installer, runtime |
 | `packages/plugin` | `@nextpluggable/plugin`: the SDK and build tool for plugin authors |
 | `plugins/` | Reference plugins, with their built `dist/` committed |
-| `examples/site` | A demo Next.js site with everything wired up |
-| `e2e/` | Browser test of the whole owner journey against a mock GitHub API |
-| `docs/` | [Research and decisions](docs/research.md), [writing plugins](docs/writing-plugins.md) |
-
-### Try it
-
-```bash
-pnpm install
-pnpm build
-cp examples/site/.env.example examples/site/.env.local   # then set a password
-pnpm dev                                                  # http://localhost:3000/admin/plugins
-```
-
-In the dashboard, connect `https://github.com/rohittp0/NextPluggable` as a source, or,
-while developing, the path of this folder on your machine.
+| `e2e/` | Browser test of the whole owner journey against a mock GitHub API, and the small Next.js site (`e2e/site`) it runs against |
+| `docs/` | The documentation site, served by GitHub Pages: the guides ([integrate](docs/integrate.md), [build plugins](docs/build.md)) and [research and decisions](docs/research.md) |
+| `scripts/` | The release version script and the documentation site generator |
 
 ### Checks
 
@@ -247,3 +253,37 @@ pnpm e2e          # browser test, run twice (pages uncached, then cached); needs
 
 Rebuilding the plugins must leave `plugins/*/dist` unchanged: builds are reproducible,
 and the committed output is what sites install.
+
+### Documentation site
+
+GitHub Pages serves the `docs/` folder as it is. The guides are written once, as
+`docs/integrate.md` and `docs/build.md`: those files are what coding agents read, and
+`pnpm docs:build` renders them to the HTML pages people read. Commit the generated
+pages with the Markdown change; `pnpm test` fails when they are out of date. Changes
+under `docs/` do not publish a release.
+
+### Releases
+
+Every merge to `main` publishes `nextpluggable` and `@nextpluggable/plugin` to npm
+under one shared version ([`release.yml`](.github/workflows/release.yml)), tags the
+commit and creates a GitHub release. The patch number goes up by one each time. For a
+minor or major release, set the new version in both `packages/*/package.json` files in
+the pull request; it is published as it is, and patch releases continue from there.
+
+No npm token is stored in the repository. npm lets the workflow publish because each
+package names it as its [trusted publisher](https://docs.npmjs.com/trusted-publishers),
+which can only be set up once a package exists. So there is a one-time setup:
+
+1. Publish the first version by hand, signed in to npm as yourself:
+
+   ```bash
+   pnpm install && pnpm build
+   (cd packages/plugin && pnpm publish --access public --no-git-checks)
+   (cd packages/nextpluggable && pnpm publish --access public --no-git-checks)
+   ```
+
+2. On npmjs.com, open each package's settings and add a trusted publisher: GitHub
+   Actions, user `rohittp0`, repository `NextPluggable`, workflow `release.yml`, with
+   `npm publish` allowed.
+3. Merge to `main` within two days. npm drops a trusted publisher that has not
+   published by then.

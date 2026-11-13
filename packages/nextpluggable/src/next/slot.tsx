@@ -5,6 +5,7 @@ import { prepareClient, publicConfig } from '../core/runtime.js';
 import { getInstalledPlugins } from '../core/state.js';
 import { PluginGoneError } from '../errors.js';
 import { pluginInfo } from './plugin-page.js';
+import { PluginStyle } from './style.js';
 
 export interface SlotProps {
   /** Slot name, e.g. `header.actions`, `footer`, `body.end`. Plugins declare which slots they fill. */
@@ -35,7 +36,7 @@ export function createSlot(getConfig: () => ResolvedConfig) {
           if (!assets) return null;
           return (
             <Fragment key={`${install.id}:${slot.component}`}>
-              {assets.styleHref ? <link rel="stylesheet" href={assets.styleHref} precedence="nextpluggable" /> : null}
+              <PluginStyle assets={assets} />
               <PluginIsland moduleKey={assets.moduleKey} src={assets.scriptSrc} component={slot.component} info={pluginInfo(cfg, install)} config={publicConfig(install)} />
             </Fragment>
           );

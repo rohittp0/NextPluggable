@@ -118,7 +118,12 @@ export interface ClientAssets {
   moduleKey: string;
   scriptSrc: string;
   styleHref?: string;
+  /** The stylesheet itself, when it is small enough to be written into the page. */
+  styleCss?: string;
 }
+
+/** Larger stylesheets are linked: inlining them would bloat every page that shows the plugin. */
+const INLINE_STYLE_MAX_BYTES = 32_000;
 
 /**
  * Make a plugin's client bundle available to the SSR pass of this process and
@@ -135,10 +140,13 @@ export async function prepareClient(cfg: ResolvedConfig, install: InstallRecord)
     for (const k of ssr.keys()) if (k.startsWith(`${install.id}@`)) ssr.delete(k);
     ssr.set(moduleKey, code);
   }
+  const style = install.files.style;
+  const styleCss = style && cfg.inlineStyles && style.bytes <= INLINE_STYLE_MAX_BYTES ? ((await getFile(cfg.storage, install.id, 'style', style.sha256)) ?? undefined) : undefined;
   return {
     moduleKey,
     scriptSrc: assetUrl(cfg, install.id, client.sha256, 'client.js'),
-    styleHref: install.files.style ? assetUrl(cfg, install.id, install.files.style.sha256, 'style.css') : undefined,
+    styleHref: style ? assetUrl(cfg, install.id, style.sha256, 'style.css') : undefined,
+    styleCss,
   };
 }
 

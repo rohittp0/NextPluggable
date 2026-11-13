@@ -32,7 +32,7 @@ async function main(): Promise<number> {
 
   if (command === 'build') {
     const started = Date.now();
-    const result = await buildPlugin(dir, { minify: !flags.has('--no-minify'), log: (l) => console.log(l) });
+    const result = await buildPlugin(dir, { minify: !flags.has('--no-minify'), log: (l) => console.log(l), warn: (l) => console.log(`  ! ${l}`) });
     console.log(`✓ Built ${result.manifest.name} ${result.manifest.version} in ${Date.now() - started} ms`);
     return 0;
   }

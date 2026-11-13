@@ -38,8 +38,9 @@ const text = (value: unknown, max: number): string => (typeof value === 'string'
 
 export default definePluginServer<Config>({
   pages: {
-    form: ({ config }) => ({
+    form: ({ config, site, path }) => ({
       metadata: { title: config.heading, description: config.intro?.slice(0, 160) },
+      jsonLd: { '@context': 'https://schema.org', '@type': 'ContactPage', name: config.heading, description: config.intro, url: site.url + path },
     }),
   },
 

@@ -35,6 +35,23 @@ export interface BuildPluginOptions {
   minify?: boolean;
   /** Called with human-readable progress lines. */
   log?: (line: string) => void;
+  /** Called with advice that does not stop the build, such as a page with nothing to show in search results. */
+  warn?: (line: string) => void;
+}
+
+/**
+ * Things worth fixing for search engines that the manifest alone gives away. The
+ * site fills gaps with sensible values, so these are advice, not errors.
+ */
+export function seoAdvice(manifest: PluginManifest): string[] {
+  const advice: string[] = [];
+  for (const page of manifest.pages ?? []) {
+    if (!page.description?.trim())
+      advice.push(`Page "${page.id}" has no "description". Search results will show the plugin's description instead; add one or two sentences written for visitors.`);
+    else if (page.description.length > 200) advice.push(`Page "${page.id}" has a description of ${page.description.length} characters. Search engines cut it at about 160.`);
+    if (page.title.length > 65) advice.push(`Page "${page.id}" has a title of ${page.title.length} characters. Search engines cut it at about 60.`);
+  }
+  return advice;
 }
 
 export class PluginBuildError extends Error {
@@ -109,7 +126,7 @@ function checkServer(code: string, manifest: PluginManifest): void {
   } catch (e) {
     throw new PluginBuildError(`The server entry throws when loaded: ${(e as Error).message}`);
   }
-  const server = (mod.exports.default ?? mod.exports) as { pages?: unknown; api?: unknown };
+  const server = (mod.exports.default ?? mod.exports) as { pages?: unknown; api?: unknown; sitemap?: unknown };
   if (!server || typeof server !== 'object') throw new PluginBuildError('The server entry must `export default definePluginServer({ ... })`.');
   const pageIds = new Set((manifest.pages ?? []).map((p) => p.id));
   if (server.pages !== undefined) {
@@ -119,6 +136,7 @@ function checkServer(code: string, manifest: PluginManifest): void {
       if (typeof fn !== 'function') throw new PluginBuildError(`The loader for page "${id}" must be a function.`);
     }
   }
+  if (server.sitemap !== undefined && typeof server.sitemap !== 'function') throw new PluginBuildError('`sitemap` in the server entry must be a function.');
   if (server.api !== undefined) {
     if (typeof server.api !== 'object' || server.api === null) throw new PluginBuildError('`api` in the server entry must be an object.');
     for (const [key, fn] of Object.entries(server.api)) {
@@ -131,6 +149,7 @@ function checkServer(code: string, manifest: PluginManifest): void {
 
 export async function buildPlugin(dir: string, options: BuildPluginOptions = {}): Promise<PluginBuild> {
   const log = options.log ?? (() => {});
+  const warn = options.warn ?? (() => {});
   const { build } = await import('esbuild').catch(() => {
     throw new PluginBuildError('Building plugins needs esbuild. Install it next to @nextpluggable/plugin: npm install --save-dev esbuild');
   });
@@ -218,6 +237,7 @@ export async function buildPlugin(dir: string, options: BuildPluginOptions = {})
   const pluginBuild: PluginBuild = { buildVersion: 1, manifest, icon: await resolveIcon(dir, manifest.icon), files };
   await writeFile(path.join(outDir, 'build.json'), JSON.stringify(pluginBuild, null, 2) + '\n');
   log(`  dist/build.json`);
+  for (const line of seoAdvice(manifest)) warn(line);
   return pluginBuild;
 }
 

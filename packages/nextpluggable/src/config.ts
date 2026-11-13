@@ -29,6 +29,12 @@ export interface NextPluggableConfig {
   allowLocalSources?: boolean;
   /** How long the list of installed plugins is cached in memory per server instance. Default 5000 (0 in development). */
   cacheTtlMs?: number;
+  /**
+   * Write small plugin stylesheets into the page instead of linking to them, so a plugin
+   * never adds a request the browser must wait for. Default true. Set false on sites
+   * whose Content Security Policy forbids inline styles.
+   */
+  inlineStyles?: boolean;
 }
 
 export interface ResolvedConfig {
@@ -39,6 +45,9 @@ export interface ResolvedConfig {
   apiPath: string;
   siteUrl: string;
   siteName: string;
+  /** The site name only when the developer set one: used where a placeholder would be wrong (sharing previews, structured data). */
+  publicSiteName: string | undefined;
+  inlineStyles: boolean;
   githubApiUrl: string;
   githubToken: string | undefined;
   allowLocalSources: boolean;
@@ -87,6 +96,8 @@ export function resolveConfig(config: NextPluggableConfig): () => ResolvedConfig
       apiPath: cleanPath(config.apiPath ?? '/api/nextpluggable', 'apiPath'),
       siteUrl: (config.siteUrl ?? defaultSiteUrl()).replace(/\/+$/, ''),
       siteName: config.siteName ?? 'Your site',
+      publicSiteName: config.siteName?.trim() || undefined,
+      inlineStyles: config.inlineStyles ?? true,
       githubApiUrl: (config.github?.apiUrl ?? process.env.NEXTPLUGGABLE_GITHUB_API_URL ?? 'https://api.github.com').replace(/\/+$/, ''),
       githubToken: config.github?.token ?? process.env.NEXTPLUGGABLE_GITHUB_TOKEN ?? undefined,
       allowLocalSources: config.allowLocalSources ?? (!production || process.env.NEXTPLUGGABLE_ALLOW_LOCAL_SOURCES === '1'),

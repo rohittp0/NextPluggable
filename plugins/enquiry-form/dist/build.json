@@ -4,7 +4,7 @@
     "manifestVersion": 1,
     "id": "enquiry-form",
     "name": "Enquiry Form",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "description": "A contact page that collects enquiries from visitors, an inbox in this dashboard to follow them up, and an optional floating button on every page.",
     "author": "NextPluggable",
     "icon": "✉️",
@@ -15,7 +15,7 @@
         "path": "/contact",
         "component": "EnquiryPage",
         "title": "Contact us",
-        "description": "The page with the enquiry form."
+        "description": "Send us a message and we will get back to you."
       }
     ],
     "slots": [
@@ -100,7 +100,8 @@
         "key": "accent",
         "label": "Accent colour",
         "type": "color",
-        "default": "#0f766e",
+        "placeholder": "Your site's colour",
+        "help": "Leave empty to use your site's own colour.",
         "group": "Appearance"
       },
       {
@@ -117,18 +118,18 @@
   "files": {
     "client": {
       "path": "dist/client.js",
-      "sha256": "2887787bb0edbfa427e338d819ca94365b8e81730ca54df43539ecda09eda246",
-      "bytes": 6146
+      "sha256": "e8c4bab22b00d0351ee41f85870e75a1cb3524af34afe56bb753242b4f260d05",
+      "bytes": 6153
     },
     "style": {
       "path": "dist/style.css",
-      "sha256": "d36d5397091d5a8e32bdb7689c09b6439865ea3397f253850369cab50fed37f0",
-      "bytes": 3353
+      "sha256": "8469933a8f277b42b03a5c3f50818620791fead74f3fe874b4e4cc1af81f8a8e",
+      "bytes": 3635
     },
     "server": {
       "path": "dist/server.js",
-      "sha256": "2eed5c961b7a68de65b2c3cbc47d28d881f6d0d1a1216144ae290e85c571207a",
-      "bytes": 4938
+      "sha256": "22e7f39f11bbbcc6d72e200c24accfc293ece73c83e3aaf96db821b8e2da1a90",
+      "bytes": 5097
     }
   }
 }

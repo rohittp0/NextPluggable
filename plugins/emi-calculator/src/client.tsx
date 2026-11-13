@@ -15,7 +15,8 @@ interface Config {
   defaultRate: number;
   defaultYears: number;
   showSchedule: boolean;
-  accent: string;
+  /** Empty unless the owner chose one: the site's own colour is used then. */
+  accent?: string;
 }
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -31,6 +32,9 @@ function Field(props: {
   onChange: (v: number) => void;
 }) {
   const id = useId();
+  const shown = clamp(props.value, props.min, props.max);
+  // How far along the track the handle is, for the filled part of the slider.
+  const fill = props.max > props.min ? ((shown - props.min) / (props.max - props.min)) * 100 : 0;
   return (
     <div className="npemi-field">
       <div className="npemi-field-head">
@@ -56,7 +60,8 @@ function Field(props: {
       <input
         type="range"
         aria-label={props.label}
-        value={clamp(props.value, props.min, props.max)}
+        style={{ ['--npemi-fill' as string]: `${fill.toFixed(2)}%` }}
+        value={shown}
         min={props.min}
         max={props.max}
         step={props.step}
@@ -83,7 +88,7 @@ export function CalculatorPage(_props: PageProps) {
   const interestShare = result.totalPayment > 0 ? (result.totalInterest / result.totalPayment) * 100 : 0;
 
   return (
-    <section className="npemi" style={{ ['--npemi-accent' as string]: cfg.accent }}>
+    <section className="npemi" style={cfg.accent ? { ['--npemi-accent' as string]: cfg.accent } : undefined}>
       <header className="npemi-header">
         <h1>{cfg.heading}</h1>
         {cfg.intro ? <p>{cfg.intro}</p> : null}

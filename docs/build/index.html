@@ -1,0 +1,1197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build plugins for NextPluggable · NextPluggable</title>
+<meta name="description" content="A plugin is a folder in a GitHub repository. A site that runs NextPluggable installs it from its dashboard, straight from the repository at an exact commit. Nothing is published to npm, and the site is not rebuilt.">
+<link rel="canonical" href="https://rohittp0.github.io/NextPluggable/build/">
+<meta property="og:title" content="Build plugins for NextPluggable · NextPluggable">
+<meta property="og:description" content="A plugin is a folder in a GitHub repository. A site that runs NextPluggable installs it from its dashboard, straight from the repository at an exact commit. Nothing is published to npm, and the site is not rebuilt.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rohittp0.github.io/NextPluggable/build/">
+<meta name="color-scheme" content="light dark">
+<link rel="alternate" type="text/markdown" href="https://rohittp0.github.io/NextPluggable/build.md" title="This page as Markdown, for coding agents">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+<script>try{var t=localStorage.getItem('np-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="../"><svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="var(--primary)"/><path d="M14 7.5 20.5 14 14 20.5 7.5 14z" fill="var(--on-primary)"/></svg><span>NextPluggable</span></a>
+    <nav class="top-nav" aria-label="Guides"><a href="../integrate/">Integrate</a><a href="../build/" aria-current="page">Build plugins</a></nav>
+    <div class="top-tools">
+      <a class="top-link" href="https://github.com/rohittp0/NextPluggable">GitHub <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 3H3.5A1.5 1.5 0 0 0 2 4.5v8A1.5 1.5 0 0 0 3.5 14h8a1.5 1.5 0 0 0 1.5-1.5V10M9 2h5v5M14 2 7.5 8.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <button type="button" class="icon-btn" data-theme-toggle aria-label="Switch between light and dark"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="5.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2.75a5.25 5.25 0 0 1 0 10.5z" fill="currentColor"/></svg></button>
+    </div>
+  </div>
+</header>
+<div class="doc">
+  <aside class="side">
+    <details class="toc" open>
+      <summary>On this page</summary>
+      <ul>
+<li class="toc-2"><a href="#how-a-plugin-reaches-a-site">How a plugin reaches a site</a></li>
+<li class="toc-2"><a href="#requirements">Requirements</a></li>
+<li class="toc-2"><a href="#1-create-the-repository">1. Create the repository</a></li>
+<li class="toc-2"><a href="#2-install-the-sdk">2. Install the SDK</a></li>
+<li class="toc-2"><a href="#3-write-the-manifest">3. Write the manifest</a></li>
+<li class="toc-3"><a href="#top-level-fields">Top-level fields</a></li>
+<li class="toc-3"><a href="#pages">Pages</a></li>
+<li class="toc-3"><a href="#slots">Slots</a></li>
+<li class="toc-3"><a href="#dashboard-screens">Dashboard screens</a></li>
+<li class="toc-3"><a href="#settings">Settings</a></li>
+<li class="toc-2"><a href="#4-write-the-client-entry">4. Write the client entry</a></li>
+<li class="toc-2"><a href="#5-write-the-server-entry">5. Write the server entry</a></li>
+<li class="toc-3"><a href="#context">Context</a></li>
+<li class="toc-3"><a href="#page-loaders">Page loaders</a></li>
+<li class="toc-3"><a href="#endpoints">Endpoints</a></li>
+<li class="toc-3"><a href="#sitemap">Sitemap</a></li>
+<li class="toc-3"><a href="#lifecycle">Lifecycle</a></li>
+<li class="toc-2"><a href="#6-style-it">6. Style it</a></li>
+<li class="toc-2"><a href="#7-get-the-seo-right">7. Get the SEO right</a></li>
+<li class="toc-3"><a href="#for-search-engines">For search engines</a></li>
+<li class="toc-3"><a href="#for-ai-search">For AI search</a></li>
+<li class="toc-3"><a href="#for-everyone-who-uses-the-page">For everyone who uses the page</a></li>
+<li class="toc-3"><a href="#widgets">Widgets</a></li>
+<li class="toc-2"><a href="#8-build-and-commit">8. Build and commit</a></li>
+<li class="toc-2"><a href="#9-try-it-on-a-site">9. Try it on a site</a></li>
+<li class="toc-2"><a href="#10-publish-and-update">10. Publish and update</a></li>
+<li class="toc-2"><a href="#add-this-to-claudemd">Add this to CLAUDE.md</a></li>
+<li class="toc-2"><a href="#changes-to-this-guide">Changes to this guide</a></li>
+<li class="toc-3"><a href="#revision-3">Revision 3</a></li>
+<li class="toc-3"><a href="#revision-2">Revision 2</a></li>
+<li class="toc-3"><a href="#revision-1">Revision 1</a></li>
+<li class="toc-2"><a href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-2"><a href="#done-when">Done when</a></li>
+      </ul>
+    </details>
+  </aside>
+  <main id="content" class="article">
+    <p class="kicker">Guide · <a href="#changes-to-this-guide">revision 3</a></p>
+    <h1>Build plugins for NextPluggable</h1>
+    <div class="lead"><p>A plugin is a folder in a GitHub repository. A site that runs NextPluggable installs it
+from its dashboard, straight from the repository at an exact commit. Nothing is
+published to npm, and the site is not rebuilt.</p>
+<p>One plugin can add server-rendered pages that search engines index, HTTP endpoints,
+stored data, widgets in the site&#39;s layout, a settings form, and screens inside the
+dashboard.</p>
+</div>
+    <section class="agent-box" aria-label="This page for coding agents">
+      <p class="agent-box-title">Working with a coding agent? Give it this page as Markdown.</p>
+      <div class="agent-field">
+  <a class="agent-url" href="../build.md" data-agent-url="../build.md">https://rohittp0.github.io/NextPluggable/build.md</a>
+  <button type="button" class="btn btn-primary" data-copy="https://rohittp0.github.io/NextPluggable/build.md" data-copy-url="../build.md" aria-label="Copy the address of the build plugins guide"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy URL</span></button>
+</div>
+<p class="agent-more"><button type="button" class="link" data-copy="Read https://rohittp0.github.io/NextPluggable/build.md and follow it to set this repository up as a NextPluggable plugin source. Then build this plugin: " data-copy-url="../build.md" data-copy-prompt="Read {url} and follow it to set this repository up as a NextPluggable plugin source. Then build this plugin: ">Copy as a prompt</button></p>
+    </section>
+<h2 id="how-a-plugin-reaches-a-site"><a class="anchor" href="#how-a-plugin-reaches-a-site" aria-label="Link to this section">#</a>How a plugin reaches a site</h2>
+<ol>
+<li>You write source in <code>src/</code> and a manifest, <code>plugin.json</code>.</li>
+<li><code>nextpluggable-plugin build</code> writes <code>dist/</code>: the bundles and <code>dist/build.json</code>,
+which records the manifest and a fingerprint of every file.</li>
+<li>You commit <code>dist/</code> and push.</li>
+<li>The site&#39;s owner connects the repository under <strong>Sources</strong> in their dashboard and
+installs the plugin. The site downloads <code>dist/</code> at that commit, checks every file
+against its fingerprint, and the plugin is live about a second later.</li>
+<li>When you push a new build, the dashboard offers it as an update.</li>
+</ol>
+<h2 id="requirements"><a class="anchor" href="#requirements" aria-label="Link to this section">#</a>Requirements</h2>
+<ul>
+<li>Node.js 20.16 or newer.</li>
+<li>A GitHub repository, public or private.</li>
+<li>React knowledge. Plugin UI is React client components.</li>
+</ul>
+<h2 id="1-create-the-repository"><a class="anchor" href="#1-create-the-repository" aria-label="Link to this section">#</a>1. Create the repository</h2>
+<p>Use this layout for a new repository. It holds any number of plugins.</p>
+<div class="code"><div class="code-head"><span></span><button type="button" class="code-copy" data-copy="acme-plugins/
+  nextpluggable.json      lists the plugin folders
+  package.json
+  tsconfig.json
+  plugin-env.d.ts         lets TypeScript accept CSS and image imports
+  plugins/
+    hello/
+      plugin.json         the manifest
+      src/client.tsx      React components: pages, widgets, dashboard screens
+      src/server.ts       optional: page loaders and HTTP endpoints
+      src/style.css       optional: imported from client.tsx
+      dist/               build output. Commit it"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code>acme-plugins/
+  nextpluggable.json      lists the plugin folders
+  package.json
+  tsconfig.json
+  plugin-env.d.ts         lets TypeScript accept CSS and image imports
+  plugins/
+    hello/
+      plugin.json         the manifest
+      src/client.tsx      React components: pages, widgets, dashboard screens
+      src/server.ts       optional: page loaders and HTTP endpoints
+      src/style.css       optional: imported from client.tsx
+      dist/               build output. Commit it</code></pre></div>
+<p><code>nextpluggable.json</code> names the repository and lists every plugin folder:</p>
+<div class="code"><div class="code-head"><span>json</span><button type="button" class="code-copy" data-copy="{
+  &quot;name&quot;: &quot;Acme plugins&quot;,
+  &quot;description&quot;: &quot;Plugins maintained by Acme.&quot;,
+  &quot;plugins&quot;: [&quot;plugins/hello&quot;]
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Acme plugins&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Plugins maintained by Acme.&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;plugins&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;plugins/hello&quot;</span><span class="hljs-punctuation">]</span>
+<span class="hljs-punctuation">}</span></code></pre></div>
+<p><code>package.json</code>:</p>
+<div class="code"><div class="code-head"><span>json</span><button type="button" class="code-copy" data-copy="{
+  &quot;name&quot;: &quot;acme-plugins&quot;,
+  &quot;private&quot;: true,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;scripts&quot;: {
+    &quot;build&quot;: &quot;nextpluggable-plugin build plugins/hello&quot;,
+    &quot;validate&quot;: &quot;nextpluggable-plugin validate plugins/hello&quot;,
+    &quot;typecheck&quot;: &quot;tsc --noEmit&quot;
+  }
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;acme-plugins&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;private&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;module&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;scripts&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;build&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;nextpluggable-plugin build plugins/hello&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;validate&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;nextpluggable-plugin validate plugins/hello&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;typecheck&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;tsc --noEmit&quot;</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span></code></pre></div>
+<p>When you add a plugin, add its folder to <code>nextpluggable.json</code> and to both scripts:
+<code>nextpluggable-plugin build plugins/hello &amp;&amp; nextpluggable-plugin build plugins/cart</code>.</p>
+<p><code>tsconfig.json</code>:</p>
+<div class="code"><div class="code-head"><span>json</span><button type="button" class="code-copy" data-copy="{
+  &quot;compilerOptions&quot;: {
+    &quot;target&quot;: &quot;ES2022&quot;,
+    &quot;lib&quot;: [&quot;ES2023&quot;, &quot;DOM&quot;, &quot;DOM.Iterable&quot;],
+    &quot;module&quot;: &quot;ESNext&quot;,
+    &quot;moduleResolution&quot;: &quot;Bundler&quot;,
+    &quot;jsx&quot;: &quot;react-jsx&quot;,
+    &quot;strict&quot;: true,
+    &quot;noEmit&quot;: true,
+    &quot;skipLibCheck&quot;: true,
+    &quot;isolatedModules&quot;: true
+  },
+  &quot;include&quot;: [&quot;plugins/*/src&quot;, &quot;plugin-env.d.ts&quot;]
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;compilerOptions&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;target&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;ES2022&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;lib&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;ES2023&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;DOM&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;DOM.Iterable&quot;</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;module&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;ESNext&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;moduleResolution&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Bundler&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;jsx&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;react-jsx&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;strict&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;noEmit&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;skipLibCheck&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;isolatedModules&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span>
+  <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;include&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;plugins/*/src&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;plugin-env.d.ts&quot;</span><span class="hljs-punctuation">]</span>
+<span class="hljs-punctuation">}</span></code></pre></div>
+<p><code>plugin-env.d.ts</code>:</p>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="// Asset imports understood by `nextpluggable-plugin build`.
+declare module '*.css';
+declare module '*.svg' {
+  const url: string;
+  export default url;
+}
+declare module '*.png' {
+  const url: string;
+  export default url;
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// Asset imports understood by `nextpluggable-plugin build`.</span>
+<span class="hljs-keyword">declare</span> <span class="hljs-variable language_">module</span> <span class="hljs-string">&#x27;*.css&#x27;</span>;
+<span class="hljs-keyword">declare</span> <span class="hljs-variable language_">module</span> <span class="hljs-string">&#x27;*.svg&#x27;</span> {
+  <span class="hljs-keyword">const</span> <span class="hljs-attr">url</span>: <span class="hljs-built_in">string</span>;
+  <span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> url;
+}
+<span class="hljs-keyword">declare</span> <span class="hljs-variable language_">module</span> <span class="hljs-string">&#x27;*.png&#x27;</span> {
+  <span class="hljs-keyword">const</span> <span class="hljs-attr">url</span>: <span class="hljs-built_in">string</span>;
+  <span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> url;
+}</code></pre></div>
+<p><code>.gitignore</code> must ignore <code>node_modules/</code> and must <strong>not</strong> ignore <code>dist/</code>.</p>
+<p>A repository with exactly one plugin may instead keep <code>plugin.json</code>, <code>src/</code> and <code>dist/</code>
+at its root, with no <code>nextpluggable.json</code>. The build commands then take no folder.</p>
+<p class="check"><strong>Check:</strong> the files above exist, and <code>dist</code> appears nowhere in <code>.gitignore</code>.</p>
+<h2 id="2-install-the-sdk"><a class="anchor" href="#2-install-the-sdk" aria-label="Link to this section">#</a>2. Install the SDK</h2>
+<div class="code"><div class="code-head"><span>bash</span><button type="button" class="code-copy" data-copy="npm install --save-dev @nextpluggable/plugin@latest esbuild react @types/react typescript"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code>npm install --save-dev @nextpluggable/plugin@latest esbuild react @types/react typescript</code></pre></div>
+<p><code>@nextpluggable/plugin</code> is the SDK and the build tool. <code>esbuild</code> does the bundling.
+<code>react</code> is needed for types and is never bundled into a plugin. Add <code>@types/node</code> if
+the server code uses Node built-ins.</p>
+<p class="check"><strong>Check:</strong> <code>npx nextpluggable-plugin</code> prints its usage.</p>
+<h2 id="3-write-the-manifest"><a class="anchor" href="#3-write-the-manifest" aria-label="Link to this section">#</a>3. Write the manifest</h2>
+<p><code>plugins/hello/plugin.json</code> says what the plugin adds. Everything the site&#39;s owner sees
+about the plugin comes from this file.</p>
+<div class="code"><div class="code-head"><span>json</span><button type="button" class="code-copy" data-copy="{
+  &quot;manifestVersion&quot;: 1,
+  &quot;id&quot;: &quot;hello&quot;,
+  &quot;name&quot;: &quot;Hello&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;description&quot;: &quot;A greeting page with a visitor counter, and a small badge on every page.&quot;,
+  &quot;author&quot;: &quot;Acme&quot;,
+  &quot;icon&quot;: &quot;👋&quot;,
+  &quot;category&quot;: &quot;Examples&quot;,
+
+  &quot;pages&quot;: [
+    {
+      &quot;id&quot;: &quot;greeting&quot;,
+      &quot;path&quot;: &quot;/hello&quot;,
+      &quot;component&quot;: &quot;HelloPage&quot;,
+      &quot;title&quot;: &quot;Hello&quot;,
+      &quot;description&quot;: &quot;A friendly greeting, and a count of how many times this page has been opened.&quot;
+    }
+  ],
+  &quot;slots&quot;: [{ &quot;slot&quot;: &quot;body.end&quot;, &quot;component&quot;: &quot;HelloBadge&quot; }],
+  &quot;admin&quot;: [{ &quot;id&quot;: &quot;stats&quot;, &quot;title&quot;: &quot;Stats&quot;, &quot;component&quot;: &quot;HelloStats&quot; }],
+
+  &quot;permissions&quot;: [&quot;storage&quot;],
+  &quot;settings&quot;: [
+    { &quot;key&quot;: &quot;greeting&quot;, &quot;label&quot;: &quot;Greeting&quot;, &quot;type&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Hello there&quot;, &quot;required&quot;: true },
+    { &quot;key&quot;: &quot;showBadge&quot;, &quot;label&quot;: &quot;Show a badge on every page&quot;, &quot;type&quot;: &quot;toggle&quot;, &quot;default&quot;: true },
+    { &quot;key&quot;: &quot;accent&quot;, &quot;label&quot;: &quot;Accent colour&quot;, &quot;type&quot;: &quot;color&quot;, &quot;placeholder&quot;: &quot;Your site's colour&quot;, &quot;help&quot;: &quot;Leave empty to use your site's own colour.&quot; }
+  ]
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;manifestVersion&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;hello&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Hello&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;version&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;1.0.0&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;A greeting page with a visitor counter, and a small badge on every page.&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;author&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Acme&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;icon&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;👋&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;category&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Examples&quot;</span><span class="hljs-punctuation">,</span>
+
+  <span class="hljs-attr">&quot;pages&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;greeting&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;path&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;/hello&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;component&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;HelloPage&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;title&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Hello&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;A friendly greeting, and a count of how many times this page has been opened.&quot;</span>
+    <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;slots&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;slot&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;body.end&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;component&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;HelloBadge&quot;</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;admin&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;stats&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;title&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Stats&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;component&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;HelloStats&quot;</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+
+  <span class="hljs-attr">&quot;permissions&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;storage&quot;</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;settings&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;key&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;greeting&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;label&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Greeting&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;text&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;default&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Hello there&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;required&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;key&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;showBadge&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;label&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Show a badge on every page&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;toggle&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;default&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;key&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;accent&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;label&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Accent colour&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;color&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;placeholder&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Your site&#x27;s colour&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;help&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Leave empty to use your site&#x27;s own colour.&quot;</span> <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">]</span>
+<span class="hljs-punctuation">}</span></code></pre></div>
+<h3 id="top-level-fields"><a class="anchor" href="#top-level-fields" aria-label="Link to this section">#</a>Top-level fields</h3>
+<div class="table"><table>
+<thead><tr><th>Field</th><th>Required</th><th>Rules</th></tr></thead>
+<tbody>
+<tr><td><code>manifestVersion</code></td><td>Yes</td><td>Always <code>1</code></td></tr>
+<tr><td><code>id</code></td><td>Yes</td><td>3 to 50 characters: lowercase letters, digits and dashes, starting with a letter and not ending with a dash. Unique across everything a site installs. Changing it makes a different plugin</td></tr>
+<tr><td><code>name</code></td><td>Yes</td><td>At most 80 characters</td></tr>
+<tr><td><code>version</code></td><td>Yes</td><td><code>1.2.3</code>. Shown to the owner</td></tr>
+<tr><td><code>description</code></td><td></td><td>At most 500 characters. One or two sentences the owner reads before installing</td></tr>
+<tr><td><code>author</code>, <code>homepage</code>, <code>category</code></td><td></td><td>Text</td></tr>
+<tr><td><code>icon</code></td><td></td><td>An emoji, or the path of a <code>.svg</code>, <code>.png</code>, <code>.webp</code> or <code>.jpg</code> file inside the plugin folder, 32 kB at most. It is inlined at build time</td></tr>
+<tr><td><code>entry</code></td><td></td><td><code>{ &quot;client&quot;: &quot;…&quot;, &quot;server&quot;: &quot;…&quot; }</code> to use other entry files than <code>src/client.*</code> and <code>src/server.*</code></td></tr>
+<tr><td><code>pages</code></td><td></td><td>Pages the plugin adds</td></tr>
+<tr><td><code>slots</code></td><td></td><td>Components to render in named places of the site&#39;s layout</td></tr>
+<tr><td><code>admin</code></td><td></td><td>Screens added as tabs on the plugin&#39;s page in the dashboard</td></tr>
+<tr><td><code>settings</code></td><td></td><td>The settings form</td></tr>
+<tr><td><code>permissions</code></td><td></td><td>What the plugin does, shown to the owner before install: <code>storage</code>, <code>email</code>, <code>fetch:&lt;host&gt;</code> or <code>fetch:*</code>. Declare honestly. Sites display these today and will enforce them once plugins are sandboxed</td></tr>
+</tbody>
+</table></div>
+<h3 id="pages"><a class="anchor" href="#pages" aria-label="Link to this section">#</a>Pages</h3>
+<div class="code"><div class="code-head"><span>json</span><button type="button" class="code-copy" data-copy="{ &quot;id&quot;: &quot;product&quot;, &quot;path&quot;: &quot;/shop/:slug&quot;, &quot;component&quot;: &quot;ProductPage&quot;, &quot;title&quot;: &quot;Product&quot;, &quot;description&quot;: &quot;One product.&quot; }"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;product&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;path&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;/shop/:slug&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;component&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;ProductPage&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;title&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Product&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;One product.&quot;</span> <span class="hljs-punctuation">}</span></code></pre></div>
+<div class="table"><table>
+<thead><tr><th>Key</th><th>Rules</th></tr></thead>
+<tbody>
+<tr><td><code>id</code></td><td>A short identifier: letters, digits and underscores, starting with a letter. The server loader for the page is matched by it</td></tr>
+<tr><td><code>path</code></td><td>The default address. Starts with <code>/</code>, has no trailing slash, and cannot be <code>/</code> itself. <code>:name</code> matches one segment, and a final <code>*</code> matches the rest. Both arrive in <code>params</code></td></tr>
+<tr><td><code>component</code></td><td>The name of a component exported from the client entry</td></tr>
+<tr><td><code>title</code></td><td>The default <code>&lt;title&gt;</code>, also shown in the dashboard. About 60 characters at most</td></tr>
+<tr><td><code>description</code></td><td>What search results show under the title, also shown in the dashboard. One or two sentences written for visitors, about 150 characters. The build points out a page without one</td></tr>
+<tr><td><code>configurablePath</code></td><td>Optional. <code>false</code> stops the owner changing the address</td></tr>
+</tbody>
+</table></div>
+<ul>
+<li>The owner can change the address of any page with a fixed path. <strong>Never hard-code
+your own addresses.</strong> Read them from <code>usePlugin().paths</code> in components and
+<code>ctx.paths</code> on the server.</li>
+<li>The site&#39;s own routes always win over plugin pages, and two plugins cannot claim the
+same address. <code>/api</code>, <code>/_next</code> and the dashboard&#39;s addresses are reserved.</li>
+<li>The server never sees the query string, because sites may cache plugin pages and
+share them between visitors. Put anything search engines should see in the address
+itself, such as <code>/shop/page/:n</code>, and read filters and searches in the browser with
+<code>useQuery()</code>.</li>
+</ul>
+<h3 id="slots"><a class="anchor" href="#slots" aria-label="Link to this section">#</a>Slots</h3>
+<div class="code"><div class="code-head"><span>json</span><button type="button" class="code-copy" data-copy="{ &quot;slot&quot;: &quot;body.end&quot;, &quot;component&quot;: &quot;HelloBadge&quot;, &quot;order&quot;: 10 }"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;slot&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;body.end&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;component&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;HelloBadge&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;order&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">10</span> <span class="hljs-punctuation">}</span></code></pre></div>
+<p>A slot component receives no props. The conventional slot names are <code>header.actions</code>,
+<code>footer</code> and <code>body.end</code>. A site renders only the slots its developer placed in the
+layout, so a widget may not appear on every site. Lower <code>order</code> renders first.</p>
+<h3 id="dashboard-screens"><a class="anchor" href="#dashboard-screens" aria-label="Link to this section">#</a>Dashboard screens</h3>
+<div class="code"><div class="code-head"><span>json</span><button type="button" class="code-copy" data-copy="{ &quot;id&quot;: &quot;stats&quot;, &quot;title&quot;: &quot;Stats&quot;, &quot;component&quot;: &quot;HelloStats&quot; }"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;stats&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;title&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Stats&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;component&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;HelloStats&quot;</span> <span class="hljs-punctuation">}</span></code></pre></div>
+<p>Each entry is a tab on the plugin&#39;s page in the dashboard, shown only to the signed-in
+owner.</p>
+<h3 id="settings"><a class="anchor" href="#settings" aria-label="Link to this section">#</a>Settings</h3>
+<p>Each entry becomes one field of a generated form. Labels and help text are read by a
+non-technical person, so write them in plain words.</p>
+<div class="table"><table>
+<thead><tr><th><code>type</code></th><th>Field</th><th>Extra keys</th></tr></thead>
+<tbody>
+<tr><td><code>text</code>, <code>textarea</code>, <code>url</code>, <code>email</code></td><td>Text inputs, validated accordingly</td><td><code>placeholder</code></td></tr>
+<tr><td><code>number</code></td><td>Number input</td><td><code>min</code>, <code>max</code>, <code>step</code></td></tr>
+<tr><td><code>toggle</code></td><td>On/off switch</td><td></td></tr>
+<tr><td><code>select</code></td><td>Dropdown</td><td><code>options: [{ &quot;value&quot;, &quot;label&quot; }]</code>, required</td></tr>
+<tr><td><code>color</code></td><td>Colour picker, stored as <code>#rrggbb</code></td><td></td></tr>
+<tr><td><code>secret</code></td><td>Write-only field for API keys and the like</td><td>No <code>default</code> allowed</td></tr>
+</tbody>
+</table></div>
+<p>Common keys: <code>key</code> (an identifier, like a page <code>id</code>), <code>label</code>, <code>help</code>, <code>default</code>,
+<code>required</code>, <code>group</code> (a section heading), <code>serverOnly</code>.</p>
+<ul>
+<li>A <code>default</code> must match the type: a number for <code>number</code>, <code>true</code> or <code>false</code> for
+<code>toggle</code>, text for everything else.</li>
+<li><code>secret</code> values are encrypted at rest, reach server code only, and are never shown
+again in the dashboard.</li>
+<li><code>&quot;serverOnly&quot;: true</code> keeps any other setting away from browsers.</li>
+<li>A plugin with a <code>required</code> setting that has no value is installed paused, and
+switches on once the owner fills it in.</li>
+<li>On update, values the owner already entered are kept for settings that still exist.</li>
+</ul>
+<p class="check"><strong>Check:</strong> <code>npx nextpluggable-plugin validate plugins/hello</code> prints
+<code>✓ Hello 1.0.0 — plugin.json is valid</code>. On a mistake it lists every problem in words.</p>
+<h2 id="4-write-the-client-entry"><a class="anchor" href="#4-write-the-client-entry" aria-label="Link to this section">#</a>4. Write the client entry</h2>
+<p><code>src/client.tsx</code> exports every component the manifest names. They are ordinary React
+client components: hooks, state and effects all work.</p>
+<div class="code"><div class="code-head"><span>tsx</span><button type="button" class="code-copy" data-copy="// plugins/hello/src/client.tsx
+import { useEffect, useState } from 'react';
+import { Link, usePlugin, usePluginApi, usePluginConfig, type PageProps } from '@nextpluggable/plugin';
+import './style.css';
+
+interface Config {
+  greeting: string;
+  showBadge: boolean;
+  /** Empty unless the owner chose a colour. The site's own colour applies then. */
+  accent?: string;
+}
+
+const accent = (color?: string) =&gt; (color ? { ['--hello-accent' as string]: color } : undefined);
+
+/** The page at /hello. `data` comes from the server loader. */
+export function HelloPage({ data }: PageProps&lt;{ visits: number }&gt;) {
+  const config = usePluginConfig&lt;Config&gt;();
+  const api = usePluginApi();
+  const [visits, setVisits] = useState(data.visits);
+
+  // Counted in the browser: the server-rendered page may be cached and shared.
+  useEffect(() =&gt; {
+    api('/visits', { method: 'POST' })
+      .then((res) =&gt; (res.ok ? res.json() : null))
+      .then((body: { visits: number } | null) =&gt; body &amp;&amp; setVisits(body.visits))
+      .catch(() =&gt; {});
+  }, [api]);
+
+  return (
+    &lt;main className=&quot;hello&quot; style={accent(config.accent)}&gt;
+      &lt;h1&gt;{config.greeting}&lt;/h1&gt;
+      &lt;p className=&quot;hello-count&quot;&gt;This page has been opened {visits} times.&lt;/p&gt;
+    &lt;/main&gt;
+  );
+}
+
+/** A widget for the `body.end` slot. Slot components receive no props. */
+export function HelloBadge() {
+  const config = usePluginConfig&lt;Config&gt;();
+  const { paths } = usePlugin();
+  if (!config.showBadge) return null;
+  return (
+    &lt;Link href={paths.greeting ?? '/hello'} className=&quot;hello-badge&quot; style={accent(config.accent)}&gt;
+      {config.greeting}
+    &lt;/Link&gt;
+  );
+}
+
+/** A dashboard screen. Only the signed-in owner sees it. */
+export function HelloStats() {
+  const api = usePluginApi();
+  const [visits, setVisits] = useState&lt;number | null&gt;(null);
+
+  useEffect(() =&gt; {
+    api('/visits')
+      .then((res) =&gt; (res.ok ? res.json() : null))
+      .then((body: { visits: number } | null) =&gt; setVisits(body?.visits ?? 0))
+      .catch(() =&gt; setVisits(0));
+  }, [api]);
+
+  return &lt;p className=&quot;hello-count&quot;&gt;{visits === null ? 'Loading…' : `${visits} visits so far.`}&lt;/p&gt;;
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// plugins/hello/src/client.tsx</span>
+<span class="hljs-keyword">import</span> { useEffect, useState } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;react&#x27;</span>;
+<span class="hljs-keyword">import</span> { <span class="hljs-title class_">Link</span>, usePlugin, usePluginApi, usePluginConfig, <span class="hljs-keyword">type</span> <span class="hljs-title class_">PageProps</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@nextpluggable/plugin&#x27;</span>;
+<span class="hljs-keyword">import</span> <span class="hljs-string">&#x27;./style.css&#x27;</span>;
+
+<span class="hljs-keyword">interface</span> <span class="hljs-title class_">Config</span> {
+  <span class="hljs-attr">greeting</span>: <span class="hljs-built_in">string</span>;
+  <span class="hljs-attr">showBadge</span>: <span class="hljs-built_in">boolean</span>;
+  <span class="hljs-comment">/** Empty unless the owner chose a colour. The site&#x27;s own colour applies then. */</span>
+  <span class="hljs-attr">accent</span>?: <span class="hljs-built_in">string</span>;
+}
+
+<span class="hljs-keyword">const</span> <span class="hljs-title function_">accent</span> = (<span class="hljs-params"><span class="hljs-attr">color</span>?: <span class="hljs-built_in">string</span></span>) =&gt; (color ? { [<span class="hljs-string">&#x27;--hello-accent&#x27;</span> <span class="hljs-keyword">as</span> <span class="hljs-built_in">string</span>]: color } : <span class="hljs-literal">undefined</span>);
+
+<span class="hljs-comment">/** The page at /hello. `data` comes from the server loader. */</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">HelloPage</span>(<span class="hljs-params">{ data }: <span class="hljs-title class_">PageProps</span>&lt;{ visits: <span class="hljs-built_in">number</span> }&gt;</span>) {
+  <span class="hljs-keyword">const</span> config = usePluginConfig&lt;<span class="hljs-title class_">Config</span>&gt;();
+  <span class="hljs-keyword">const</span> api = <span class="hljs-title function_">usePluginApi</span>();
+  <span class="hljs-keyword">const</span> [visits, setVisits] = <span class="hljs-title function_">useState</span>(data.<span class="hljs-property">visits</span>);
+
+  <span class="hljs-comment">// Counted in the browser: the server-rendered page may be cached and shared.</span>
+  <span class="hljs-title function_">useEffect</span>(<span class="hljs-function">() =&gt;</span> {
+    <span class="hljs-title function_">api</span>(<span class="hljs-string">&#x27;/visits&#x27;</span>, { <span class="hljs-attr">method</span>: <span class="hljs-string">&#x27;POST&#x27;</span> })
+      .<span class="hljs-title function_">then</span>(<span class="hljs-function">(<span class="hljs-params">res</span>) =&gt;</span> (res.<span class="hljs-property">ok</span> ? res.<span class="hljs-title function_">json</span>() : <span class="hljs-literal">null</span>))
+      .<span class="hljs-title function_">then</span>(<span class="hljs-function">(<span class="hljs-params"><span class="hljs-attr">body</span>: { visits: <span class="hljs-built_in">number</span> } | <span class="hljs-literal">null</span></span>) =&gt;</span> body &amp;&amp; <span class="hljs-title function_">setVisits</span>(body.<span class="hljs-property">visits</span>))
+      .<span class="hljs-title function_">catch</span>(<span class="hljs-function">() =&gt;</span> {});
+  }, [api]);
+
+  <span class="hljs-keyword">return</span> (
+    <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">main</span> <span class="hljs-attr">className</span>=<span class="hljs-string">&quot;hello&quot;</span> <span class="hljs-attr">style</span>=<span class="hljs-string">{accent(config.accent)}</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">h1</span>&gt;</span>{config.greeting}<span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">p</span> <span class="hljs-attr">className</span>=<span class="hljs-string">&quot;hello-count&quot;</span>&gt;</span>This page has been opened {visits} times.<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">main</span>&gt;</span></span>
+  );
+}
+
+<span class="hljs-comment">/** A widget for the `body.end` slot. Slot components receive no props. */</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">HelloBadge</span>(<span class="hljs-params"></span>) {
+  <span class="hljs-keyword">const</span> config = usePluginConfig&lt;<span class="hljs-title class_">Config</span>&gt;();
+  <span class="hljs-keyword">const</span> { paths } = <span class="hljs-title function_">usePlugin</span>();
+  <span class="hljs-keyword">if</span> (!config.<span class="hljs-property">showBadge</span>) <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;
+  <span class="hljs-keyword">return</span> (
+    <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">Link</span> <span class="hljs-attr">href</span>=<span class="hljs-string">{paths.greeting</span> ?? &#x27;/<span class="hljs-attr">hello</span>&#x27;} <span class="hljs-attr">className</span>=<span class="hljs-string">&quot;hello-badge&quot;</span> <span class="hljs-attr">style</span>=<span class="hljs-string">{accent(config.accent)}</span>&gt;</span>
+      {config.greeting}
+    <span class="hljs-tag">&lt;/<span class="hljs-name">Link</span>&gt;</span></span>
+  );
+}
+
+<span class="hljs-comment">/** A dashboard screen. Only the signed-in owner sees it. */</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">HelloStats</span>(<span class="hljs-params"></span>) {
+  <span class="hljs-keyword">const</span> api = <span class="hljs-title function_">usePluginApi</span>();
+  <span class="hljs-keyword">const</span> [visits, setVisits] = useState&lt;<span class="hljs-built_in">number</span> | <span class="hljs-literal">null</span>&gt;(<span class="hljs-literal">null</span>);
+
+  <span class="hljs-title function_">useEffect</span>(<span class="hljs-function">() =&gt;</span> {
+    <span class="hljs-title function_">api</span>(<span class="hljs-string">&#x27;/visits&#x27;</span>)
+      .<span class="hljs-title function_">then</span>(<span class="hljs-function">(<span class="hljs-params">res</span>) =&gt;</span> (res.<span class="hljs-property">ok</span> ? res.<span class="hljs-title function_">json</span>() : <span class="hljs-literal">null</span>))
+      .<span class="hljs-title function_">then</span>(<span class="hljs-function">(<span class="hljs-params"><span class="hljs-attr">body</span>: { visits: <span class="hljs-built_in">number</span> } | <span class="hljs-literal">null</span></span>) =&gt;</span> <span class="hljs-title function_">setVisits</span>(body?.<span class="hljs-property">visits</span> ?? <span class="hljs-number">0</span>))
+      .<span class="hljs-title function_">catch</span>(<span class="hljs-function">() =&gt;</span> <span class="hljs-title function_">setVisits</span>(<span class="hljs-number">0</span>));
+  }, [api]);
+
+  <span class="hljs-keyword">return</span> <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">p</span> <span class="hljs-attr">className</span>=<span class="hljs-string">&quot;hello-count&quot;</span>&gt;</span>{visits === null ? &#x27;Loading…&#x27; : `${visits} visits so far.`}<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span></span>;
+}</code></pre></div>
+<p>What <code>@nextpluggable/plugin</code> provides:</p>
+<div class="table"><table>
+<thead><tr><th>Export</th><th>What it gives you</th></tr></thead>
+<tbody>
+<tr><td><code>usePluginConfig&lt;T&gt;()</code></td><td>The owner&#39;s settings, minus secrets and server-only values</td></tr>
+<tr><td><code>usePlugin()</code></td><td><code>{ id, version, apiBase, paths, page }</code>. <code>paths</code> maps your page ids to their current addresses. On a page, <code>page</code> is <code>{ id, path, params }</code></td></tr>
+<tr><td><code>usePluginApi()</code></td><td><code>api(path, init)</code>: a <code>fetch</code> bound to your plugin&#39;s endpoints. Pass <code>{ json }</code> to send a JSON body</td></tr>
+<tr><td><code>useNavigation()</code></td><td><code>{ pathname, push, replace, back }</code> from the site&#39;s router</td></tr>
+<tr><td><code>useQuery()</code></td><td>The query string as <code>URLSearchParams</code>. Browser-only: empty in the server-rendered HTML and on the first render, then it fills in</td></tr>
+<tr><td><code>Link</code></td><td>A client-side navigation link. Props: <code>href</code>, <code>children</code>, <code>className</code>, <code>style</code>, <code>title</code> and <code>aria-label</code></td></tr>
+<tr><td><code>PageProps&lt;Data&gt;</code></td><td>Props of a page component: <code>data</code> from the server loader and <code>params</code> from the address</td></tr>
+</tbody>
+</table></div>
+<p>Rules for client code:</p>
+<ul>
+<li><strong><code>react</code>, <code>react-dom</code> and <code>@nextpluggable/plugin</code> come from the site and are not
+bundled.</strong> That is why plugin bundles are small and why a plugin shares the site&#39;s
+router. Everything else you import is bundled into the plugin.</li>
+<li><strong>No Next.js imports.</strong> <code>next/link</code>, <code>next/image</code>, <code>next/navigation</code>, server
+components and server actions are not available. Use <code>Link</code>, <code>useNavigation()</code> and
+plain <code>&lt;img&gt;</code>.</li>
+<li><strong>Components are rendered on the server first, then hydrated.</strong> Do not read <code>window</code>,
+<code>document</code> or <code>localStorage</code> while rendering. Do it in an effect. A component that
+throws on the server is left out of the page and rendered in the browser instead, so
+its content is missing from the HTML search engines read.</li>
+<li><strong>Images and fonts</strong> imported from the client entry (<code>.svg</code>, <code>.png</code>, <code>.jpg</code>, <code>.gif</code>,
+<code>.webp</code>, <code>.woff2</code>) are inlined as data URLs. Keep them small, or link to hosted
+files.</li>
+</ul>
+<p class="check"><strong>Check:</strong> every <code>component</code> named in <code>plugin.json</code> is exported from the client entry.</p>
+<h2 id="5-write-the-server-entry"><a class="anchor" href="#5-write-the-server-entry" aria-label="Link to this section">#</a>5. Write the server entry</h2>
+<p><code>src/server.ts</code> is optional. It runs on the site&#39;s server and uses the web-standard
+<code>Request</code> and <code>Response</code>.</p>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="// plugins/hello/src/server.ts
+import { adminOnly, definePluginServer, json } from '@nextpluggable/plugin/server';
+
+interface Config {
+  greeting: string;
+}
+
+export default definePluginServer&lt;Config&gt;({
+  // Runs before a page renders: fetch data and describe the page to search engines.
+  pages: {
+    greeting: async ({ config, storage, site, path }) =&gt; ({
+      data: { visits: (await storage.get&lt;number&gt;('visits')) ?? 0 },
+      metadata: { title: config.greeting, description: 'A friendly greeting.' },
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: config.greeting, url: site.url + path },
+    }),
+  },
+
+  // HTTP endpoints under the plugin's own base address.
+  api: {
+    'POST /visits': async ({ storage }) =&gt; {
+      const visits = ((await storage.get&lt;number&gt;('visits')) ?? 0) + 1;
+      await storage.set('visits', visits);
+      return json({ visits });
+    },
+    'GET /visits': adminOnly(async ({ storage }) =&gt; json({ visits: (await storage.get&lt;number&gt;('visits')) ?? 0 })),
+  },
+
+  onInstall: async ({ storage }) =&gt; storage.set('visits', 0),
+});"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// plugins/hello/src/server.ts</span>
+<span class="hljs-keyword">import</span> { adminOnly, definePluginServer, json } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@nextpluggable/plugin/server&#x27;</span>;
+
+<span class="hljs-keyword">interface</span> <span class="hljs-title class_">Config</span> {
+  <span class="hljs-attr">greeting</span>: <span class="hljs-built_in">string</span>;
+}
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> definePluginServer&lt;<span class="hljs-title class_">Config</span>&gt;({
+  <span class="hljs-comment">// Runs before a page renders: fetch data and describe the page to search engines.</span>
+  <span class="hljs-attr">pages</span>: {
+    <span class="hljs-attr">greeting</span>: <span class="hljs-title function_">async</span> ({ config, storage, site, path }) =&gt; ({
+      <span class="hljs-attr">data</span>: { <span class="hljs-attr">visits</span>: (<span class="hljs-keyword">await</span> storage.<span class="hljs-property">get</span>&lt;<span class="hljs-built_in">number</span>&gt;(<span class="hljs-string">&#x27;visits&#x27;</span>)) ?? <span class="hljs-number">0</span> },
+      <span class="hljs-attr">metadata</span>: { <span class="hljs-attr">title</span>: config.<span class="hljs-property">greeting</span>, <span class="hljs-attr">description</span>: <span class="hljs-string">&#x27;A friendly greeting.&#x27;</span> },
+      <span class="hljs-attr">jsonLd</span>: { <span class="hljs-string">&#x27;@context&#x27;</span>: <span class="hljs-string">&#x27;https://schema.org&#x27;</span>, <span class="hljs-string">&#x27;@type&#x27;</span>: <span class="hljs-string">&#x27;WebPage&#x27;</span>, <span class="hljs-attr">name</span>: config.<span class="hljs-property">greeting</span>, <span class="hljs-attr">url</span>: site.<span class="hljs-property">url</span> + path },
+    }),
+  },
+
+  <span class="hljs-comment">// HTTP endpoints under the plugin&#x27;s own base address.</span>
+  <span class="hljs-attr">api</span>: {
+    <span class="hljs-string">&#x27;POST /visits&#x27;</span>: <span class="hljs-title function_">async</span> ({ storage }) =&gt; {
+      <span class="hljs-keyword">const</span> visits = ((<span class="hljs-keyword">await</span> storage.<span class="hljs-property">get</span>&lt;<span class="hljs-built_in">number</span>&gt;(<span class="hljs-string">&#x27;visits&#x27;</span>)) ?? <span class="hljs-number">0</span>) + <span class="hljs-number">1</span>;
+      <span class="hljs-keyword">await</span> storage.<span class="hljs-title function_">set</span>(<span class="hljs-string">&#x27;visits&#x27;</span>, visits);
+      <span class="hljs-keyword">return</span> <span class="hljs-title function_">json</span>({ visits });
+    },
+    <span class="hljs-string">&#x27;GET /visits&#x27;</span>: <span class="hljs-title function_">adminOnly</span>(<span class="hljs-title function_">async</span> ({ storage }) =&gt; <span class="hljs-title function_">json</span>({ <span class="hljs-attr">visits</span>: (<span class="hljs-keyword">await</span> storage.<span class="hljs-property">get</span>&lt;<span class="hljs-built_in">number</span>&gt;(<span class="hljs-string">&#x27;visits&#x27;</span>)) ?? <span class="hljs-number">0</span> })),
+  },
+
+  <span class="hljs-attr">onInstall</span>: <span class="hljs-title function_">async</span> ({ storage }) =&gt; storage.<span class="hljs-title function_">set</span>(<span class="hljs-string">&#x27;visits&#x27;</span>, <span class="hljs-number">0</span>),
+});</code></pre></div>
+<p>The entry must <code>export default definePluginServer({ … })</code>.</p>
+<h3 id="context"><a class="anchor" href="#context" aria-label="Link to this section">#</a>Context</h3>
+<p>Every function receives a context object:</p>
+<div class="table"><table>
+<thead><tr><th>Key</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>config</code></td><td>All settings, including secrets and server-only values</td></tr>
+<tr><td><code>storage</code></td><td>The plugin&#39;s private key-value store: <code>get(key)</code>, <code>set(key, value)</code>, <code>delete(key)</code>, <code>list(prefix)</code>. Values are JSON, 1 MB each at most. No other plugin can read it</td></tr>
+<tr><td><code>site.url</code></td><td>The site&#39;s public address, such as <code>https://example.com</code></td></tr>
+<tr><td><code>paths</code></td><td>Current addresses of the plugin&#39;s pages, by page id</td></tr>
+<tr><td><code>pluginId</code></td><td>The plugin&#39;s id</td></tr>
+<tr><td><code>log(...)</code></td><td>Writes to the server log, tagged with the plugin id</td></tr>
+<tr><td><code>path</code>, <code>params</code></td><td>Page loaders: the requested address and its parameters</td></tr>
+<tr><td><code>request</code>, <code>path</code>, <code>params</code>, <code>admin</code></td><td>Endpoints: the <code>Request</code>, the path below the plugin&#39;s base, its parameters, and the signed-in dashboard user or <code>null</code></td></tr>
+</tbody>
+</table></div>
+<h3 id="page-loaders"><a class="anchor" href="#page-loaders" aria-label="Link to this section">#</a>Page loaders</h3>
+<p><code>pages</code> is keyed by page <code>id</code>. A loader returns any of:</p>
+<div class="table"><table>
+<thead><tr><th>Key</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>data</code></td><td>Passed to the page component as <code>data</code>. Must be JSON-serialisable</td></tr>
+<tr><td><code>metadata</code></td><td><code>{ title, description, canonical, image, imageAlt, type, publishedTime, modifiedTime, noindex }</code>. All optional: see <a href="#7-get-the-seo-right">step 7</a></td></tr>
+<tr><td><code>jsonLd</code></td><td>schema.org structured data: an object or a list of objects</td></tr>
+<tr><td><code>notFound: true</code></td><td>Respond with the site&#39;s 404 page</td></tr>
+<tr><td><code>redirect: &#39;/somewhere&#39;</code></td><td>Redirect to another address</td></tr>
+</tbody>
+</table></div>
+<p>A site may cache plugin pages. Write loaders as if their result is shared by every
+visitor and kept for a while. Cached pages are refreshed whenever the owner changes
+anything in the dashboard, and whenever the owner changes data through one of your
+endpoints. Data changed by visitors does not refresh them, so load fast-changing or
+per-visitor content from the browser, as the example does with its counter.</p>
+<h3 id="endpoints"><a class="anchor" href="#endpoints" aria-label="Link to this section">#</a>Endpoints</h3>
+<p><code>api</code> is keyed by <code>&quot;METHOD /path&quot;</code>. The methods are <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>PATCH</code> and
+<code>DELETE</code>, and a path may hold <code>:name</code> parameters: <code>&#39;DELETE /items/:id&#39;</code>. A handler
+returns a <code>Response</code>.</p>
+<ul>
+<li><strong>Endpoints are public unless wrapped in <code>adminOnly</code>.</strong> That is what makes form posts
+and third-party webhooks possible, so validate everything a visitor sends.</li>
+<li>Call your endpoints from components with <code>usePluginApi()</code>. It knows the base address
+and adds the header that marks the request as coming from the site&#39;s own pages.</li>
+<li>For requests that change data, <code>admin</code> is only set when the call came through
+<code>usePluginApi()</code> from the site itself, so another website cannot act as the signed-in
+owner.</li>
+<li>Helpers from <code>@nextpluggable/plugin/server</code>: <code>json(body, status?, headers?)</code> builds a
+JSON response, and <code>readJson&lt;T&gt;(request, maxBytes?)</code> reads a JSON body, returning
+<code>null</code> when it is missing, malformed or too large.</li>
+</ul>
+<h3 id="sitemap"><a class="anchor" href="#sitemap" aria-label="Link to this section">#</a>Sitemap</h3>
+<p>Pages with a fixed address are listed in the site&#39;s sitemap automatically. For a page
+with parameters, only the plugin knows which addresses exist, so list them:</p>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="export default definePluginServer({
+  // …
+  sitemap: async ({ storage, paths }) =&gt; {
+    const slugs = await storage.list('product/');
+    return slugs.map((key) =&gt; ({
+      path: `/shop/${key.slice('product/'.length)}`,
+      lastModified: '2026-11-13', // optional ISO date
+    }));
+  },
+});"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-title function_">definePluginServer</span>({
+  <span class="hljs-comment">// …</span>
+  <span class="hljs-attr">sitemap</span>: <span class="hljs-title function_">async</span> ({ storage, paths }) =&gt; {
+    <span class="hljs-keyword">const</span> slugs = <span class="hljs-keyword">await</span> storage.<span class="hljs-title function_">list</span>(<span class="hljs-string">&#x27;product/&#x27;</span>);
+    <span class="hljs-keyword">return</span> slugs.<span class="hljs-title function_">map</span>(<span class="hljs-function">(<span class="hljs-params">key</span>) =&gt;</span> ({
+      <span class="hljs-attr">path</span>: <span class="hljs-string">`/shop/<span class="hljs-subst">${key.slice(<span class="hljs-string">&#x27;product/&#x27;</span>.length)}</span>`</span>,
+      <span class="hljs-attr">lastModified</span>: <span class="hljs-string">&#x27;2026-11-13&#x27;</span>, <span class="hljs-comment">// optional ISO date</span>
+    }));
+  },
+});</code></pre></div>
+<p>An entry is a path, or <code>{ path, lastModified }</code>. Addresses that are not one of the
+plugin&#39;s own pages are ignored. Leave out anything a loader would mark <code>noindex</code>.</p>
+<h3 id="lifecycle"><a class="anchor" href="#lifecycle" aria-label="Link to this section">#</a>Lifecycle</h3>
+<p><code>onInstall</code> runs once, on first install, not on updates. If it throws, or if the server
+entry throws while loading, the install is cancelled and the owner is told the plugin
+failed to start. <code>onUninstall</code> runs before removal. Stored data is kept unless the
+owner asks for it to be deleted.</p>
+<p>Rules for server code:</p>
+<ul>
+<li><strong>Do no work when the file loads.</strong> The entry is loaded during the build and again on
+install. Top-level code that throws, or that needs a network or a database, breaks
+both. Do the work inside loaders, handlers and <code>onInstall</code>.</li>
+<li><strong>Only Node built-ins exist at runtime.</strong> Any package you import is bundled into
+<code>dist/server.js</code>. Packages that need native binaries or their own files on disk will
+not work.</li>
+<li><strong>No query string in loaders.</strong> Use address parameters.</li>
+</ul>
+<p class="check"><strong>Check:</strong> every key under <code>pages</code> matches a page <code>id</code> in <code>plugin.json</code>, and every key
+under <code>api</code> looks like <code>GET /path</code>.</p>
+<h2 id="6-style-it"><a class="anchor" href="#6-style-it" aria-label="Link to this section">#</a>6. Style it</h2>
+<p>Import CSS from the client entry. It is bundled into <code>dist/style.css</code> and loaded with
+your components.</p>
+<div class="code"><div class="code-head"><span>css</span><button type="button" class="code-copy" data-copy="/* plugins/hello/src/style.css */
+.hello,
+.hello-badge {
+  /* The site's brand colour, unless the owner picked one in the settings. */
+  --hello-accent: var(--np-accent, #4f46e5);
+  /* Text on that colour: the site's choice, else white. */
+  --hello-on-accent: var(--np-accent-text, #fff);
+}
+/* Better where the browser can do it: black or white, whichever reads well on the accent. */
+@supports (color: oklch(from red l c h)) {
+  .hello,
+  .hello-badge {
+    --hello-on-accent: var(--np-accent-text, oklch(from var(--hello-accent) clamp(0, (0.58 - l) * 1000, 1) 0 0));
+  }
+}
+.hello {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 1rem;
+  color: var(--np-text, #0f172a);
+}
+.hello h1 {
+  color: var(--hello-accent);
+}
+.hello-count {
+  color: var(--np-muted, #5b6474);
+}
+.hello-badge {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: var(--hello-accent);
+  color: var(--hello-on-accent);
+  text-decoration: none;
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">/* plugins/hello/src/style.css */</span>
+<span class="hljs-selector-class">.hello</span>,
+<span class="hljs-selector-class">.hello-badge</span> {
+  <span class="hljs-comment">/* The site&#x27;s brand colour, unless the owner picked one in the settings. */</span>
+  <span class="hljs-attr">--hello-accent</span>: <span class="hljs-built_in">var</span>(--np-accent, <span class="hljs-number">#4f46e5</span>);
+  <span class="hljs-comment">/* Text on that colour: the site&#x27;s choice, else white. */</span>
+  <span class="hljs-attr">--hello-on-accent</span>: <span class="hljs-built_in">var</span>(--np-accent-text, <span class="hljs-number">#fff</span>);
+}
+<span class="hljs-comment">/* Better where the browser can do it: black or white, whichever reads well on the accent. */</span>
+<span class="hljs-keyword">@supports</span> (<span class="hljs-attribute">color</span>: oklch(from red l c h)) {
+  <span class="hljs-selector-class">.hello</span>,
+  <span class="hljs-selector-class">.hello-badge</span> {
+    <span class="hljs-attr">--hello-on-accent</span>: <span class="hljs-built_in">var</span>(--np-accent-text, <span class="hljs-built_in">oklch</span>(from <span class="hljs-built_in">var</span>(--hello-accent) <span class="hljs-built_in">clamp</span>(<span class="hljs-number">0</span>, (<span class="hljs-number">0.58</span> - l) * <span class="hljs-number">1000</span>, <span class="hljs-number">1</span>) <span class="hljs-number">0</span> <span class="hljs-number">0</span>));
+  }
+}
+<span class="hljs-selector-class">.hello</span> {
+  <span class="hljs-attribute">max-width</span>: <span class="hljs-number">40rem</span>;
+  <span class="hljs-attribute">margin</span>: <span class="hljs-number">0</span> auto;
+  <span class="hljs-attribute">padding</span>: <span class="hljs-number">3rem</span> <span class="hljs-number">1rem</span>;
+  <span class="hljs-attribute">color</span>: <span class="hljs-built_in">var</span>(--np-text, <span class="hljs-number">#0f172a</span>);
+}
+<span class="hljs-selector-class">.hello</span> <span class="hljs-selector-tag">h1</span> {
+  <span class="hljs-attribute">color</span>: <span class="hljs-built_in">var</span>(--hello-accent);
+}
+<span class="hljs-selector-class">.hello-count</span> {
+  <span class="hljs-attribute">color</span>: <span class="hljs-built_in">var</span>(--np-muted, <span class="hljs-number">#5b6474</span>);
+}
+<span class="hljs-selector-class">.hello-badge</span> {
+  <span class="hljs-attribute">position</span>: fixed;
+  <span class="hljs-attribute">right</span>: <span class="hljs-number">1rem</span>;
+  <span class="hljs-attribute">bottom</span>: <span class="hljs-number">1rem</span>;
+  <span class="hljs-attribute">padding</span>: <span class="hljs-number">0.5rem</span> <span class="hljs-number">0.9rem</span>;
+  <span class="hljs-attribute">border-radius</span>: <span class="hljs-number">999px</span>;
+  <span class="hljs-attribute">background</span>: <span class="hljs-built_in">var</span>(--hello-accent);
+  <span class="hljs-attribute">color</span>: <span class="hljs-built_in">var</span>(--hello-on-accent);
+  <span class="hljs-attribute">text-decoration</span>: none;
+}</code></pre></div>
+<p><strong>Take your colours from the site.</strong> A site describes its look with six CSS custom
+properties. Read them, always with a fallback, because a site may set none of them:</p>
+<div class="table"><table>
+<thead><tr><th>Property</th><th>Use it for</th></tr></thead>
+<tbody>
+<tr><td><code>--np-accent</code></td><td>The site&#39;s brand colour: buttons, links, highlights</td></tr>
+<tr><td><code>--np-accent-text</code></td><td>Text and icons on top of the accent</td></tr>
+<tr><td><code>--np-text</code></td><td>Body text</td></tr>
+<tr><td><code>--np-muted</code></td><td>Secondary text</td></tr>
+<tr><td><code>--np-border</code></td><td>Lines and input borders</td></tr>
+<tr><td><code>--np-surface</code></td><td>The background of cards and inputs</td></tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>Do not give a colour setting a <code>default</code>.</strong> Leave it empty, fall back to
+<code>--np-accent</code> in CSS, and apply the owner&#39;s value only when there is one, as the
+example does. A default would override every site&#39;s own colour.</li>
+<li><strong>Never hard-code white text on the accent.</strong> A site&#39;s brand colour may be light.
+Use <code>--np-accent-text</code>, and fall back to a colour worked out from the accent, as the
+example does. Text must reach a contrast of 4.5 to 1 against what is behind it.</li>
+<li>Inherit the site&#39;s fonts. Do not set <code>font-family</code>.</li>
+<li><strong>There is no style isolation.</strong> Prefix every class with something of your own
+(<code>.hello-…</code>). Never style bare elements such as <code>h1</code> or <code>button</code> outside your own
+root class.</li>
+<li>Do not render a header or footer of your own. The site puts its own around your
+page.</li>
+<li>The dashboard sets <code>--np-text</code>, <code>--np-muted</code>, <code>--np-border</code> and <code>--np-surface</code> too,
+so dashboard screens match it.</li>
+</ul>
+<h2 id="7-get-the-seo-right"><a class="anchor" href="#7-get-the-seo-right" aria-label="Link to this section">#</a>7. Get the SEO right</h2>
+<p>A plugin is responsible for the SEO of everything it adds. The site does the mechanical
+part for every plugin page, with no code from you:</p>
+<div class="table"><table>
+<thead><tr><th>Every page gets</th><th>From</th></tr></thead>
+<tbody>
+<tr><td><code>&lt;title&gt;</code></td><td>The loader&#39;s <code>metadata.title</code>, else the page <code>title</code></td></tr>
+<tr><td>Meta description</td><td>The loader&#39;s <code>metadata.description</code>, else the page <code>description</code>, else the plugin&#39;s</td></tr>
+<tr><td>Canonical link</td><td>The page&#39;s own address, unless the loader names another</td></tr>
+<tr><td>Open Graph and Twitter tags</td><td>The same title and description, and your <code>image</code>, else the site&#39;s own sharing image</td></tr>
+<tr><td>Structured data</td><td>Your <code>jsonLd</code>, else a plain <code>WebPage</code> entry</td></tr>
+<tr><td>A sitemap entry</td><td>Every fixed address that may be indexed, plus what your <code>sitemap</code> lists</td></tr>
+<tr><td>Indexing</td><td>Allowed, unless the loader returns <code>noindex: true</code></td></tr>
+</tbody>
+</table></div>
+<p>That makes a page complete. What makes it good, only you can do. Judge it the way
+an audit does: by the HTML the server sends, not by what the page looks like once
+scripts have run.</p>
+<h3 id="for-search-engines"><a class="anchor" href="#for-search-engines" aria-label="Link to this section">#</a>For search engines</h3>
+<ul>
+<li><strong>Write a <code>description</code> for every page in <code>plugin.json</code></strong>, for the visitor who reads it
+in a search result. Not &quot;The page with the form&quot;. Return a better one from the loader
+when the content decides it, such as a product&#39;s summary.</li>
+<li><strong>One <code>&lt;h1&gt;</code> per page</strong>, saying what the page is. Headings below it in order, with no
+level skipped.</li>
+<li><strong>Return structured data that fits the content</strong>: <code>Product</code>, <code>Article</code>, <code>FAQPage</code>,
+<code>ContactPage</code>, <code>WebApplication</code> and so on. It must describe what is visibly on the
+page. The default says only &quot;this is a web page&quot;.</li>
+<li><strong>List pages that have parameters</strong> with <a href="#sitemap"><code>sitemap</code></a>.</li>
+<li><strong>Mark pages that offer searchers nothing as <code>noindex</code></strong>: thank-you pages, previews,
+empty search results, anything per visitor.</li>
+<li><strong>One address per piece of content.</strong> When the same content is reachable at two
+addresses, return <code>canonical</code> naming the main one.</li>
+<li><strong>Links are real links</strong>, made with <code>Link</code> or <code>&lt;a href&gt;</code>, and their text says where
+they go. Not &quot;click here&quot;, and never a <code>&lt;div&gt;</code> with a click handler.</li>
+<li>For a dated piece of writing, set <code>type: &#39;article&#39;</code> with <code>publishedTime</code> and
+<code>modifiedTime</code>.</li>
+</ul>
+<h3 id="for-ai-search"><a class="anchor" href="#for-ai-search" aria-label="Link to this section">#</a>For AI search</h3>
+<p>Assistants that answer questions read pages much as a search engine does, and most of
+their crawlers do not run JavaScript.</p>
+<ul>
+<li><strong>Put the content in the server-rendered HTML.</strong> What appears only after a fetch in
+the browser does not exist for them. Render tabs, accordions and &quot;show more&quot; content
+in the HTML and hide it with CSS, not by leaving it out.</li>
+<li><strong>Say it in words.</strong> A calculator, chart or map should come with a sentence or two
+that states what it does and what the result means. A tool with no text gives a
+machine nothing to quote.</li>
+<li><strong>Lead with the answer.</strong> Put the fact a visitor came for in the first paragraph
+under the heading, in a full sentence that still makes sense when quoted alone.</li>
+<li><strong>Use the element that means what you mean</strong>: lists for lists, <code>&lt;table&gt;</code> with <code>&lt;th&gt;</code>
+for data, <code>&lt;time datetime&gt;</code> for dates, <code>&lt;address&gt;</code> for contact details.</li>
+<li>Questions and answers go on the page as text, with <code>FAQPage</code> structured data.</li>
+</ul>
+<h3 id="for-everyone-who-uses-the-page"><a class="anchor" href="#for-everyone-who-uses-the-page" aria-label="Link to this section">#</a>For everyone who uses the page</h3>
+<p>Accessibility and phones are part of the same audit, and the same care.</p>
+<ul>
+<li><strong>Text reaches a contrast of 4.5 to 1</strong>, including text on the accent colour
+(<a href="#6-style-it">step 6</a>).</li>
+<li><strong>Every input has a <code>&lt;label&gt;</code>.</strong> Errors are tied to their field with
+<code>aria-describedby</code> and announced, not shown by colour alone.</li>
+<li><strong>Buttons are <code>&lt;button&gt;</code>, links are <code>&lt;a&gt;</code>.</strong> Everything works from the keyboard, and
+the focused element is visibly outlined.</li>
+<li><strong>Images have <code>alt</code> text, <code>width</code> and <code>height</code>.</strong> Decorative icons get
+<code>aria-hidden=&quot;true&quot;</code>. Add <code>loading=&quot;lazy&quot;</code> below the first screen.</li>
+<li><strong>Data tables have header cells</strong> (<code>&lt;th scope=&quot;col&quot;&gt;</code>), and a caption or a heading.</li>
+<li><strong>It fits a phone.</strong> No horizontal scrolling at 320 pixels wide, nothing with a fixed
+width, controls at least 24 pixels across with room between them, and form text of
+16 pixels or more so phones do not zoom in.</li>
+<li>Respect <code>prefers-reduced-motion</code>. Never set the page&#39;s <code>lang</code>: the site does.</li>
+</ul>
+<h3 id="widgets"><a class="anchor" href="#widgets" aria-label="Link to this section">#</a>Widgets</h3>
+<p>A widget is on every page of the site, so it must cost those pages nothing and may
+only help them.</p>
+<ul>
+<li><strong>Never move the page.</strong> Position the widget <code>fixed</code> or <code>absolute</code>, or give it a size
+that is the same from the first paint. Never insert it above content that is
+already showing.</li>
+<li><strong>No headings.</strong> Never an <code>&lt;h1&gt;</code>, and no <code>&lt;h2&gt;</code> to <code>&lt;h6&gt;</code> either. The outline of a
+page belongs to the page.</li>
+<li><strong>Render on the server.</strong> Return the widget&#39;s real markup on the first render, not an
+empty box that fills in later.</li>
+<li><strong>A link is a real link with text that describes it.</strong> A widget that links to your own
+page from every page of the site is good internal linking.</li>
+<li><strong>Stay small.</strong> The site writes a plugin&#39;s stylesheet into the page when it is under
+32 kB, so it is never an extra request the browser waits for. Past that it is. Load
+no web fonts and no third-party scripts when the page loads.</li>
+<li><strong>No hidden text</strong>, and nothing written for search engines rather than people.</li>
+<li><strong>Do not cover the page.</strong> On a phone a floating widget stays in a corner, small, and
+clear of the site&#39;s own controls.</li>
+<li>Its text meets the same contrast rule as a page&#39;s.</li>
+</ul>
+<p class="check"><strong>Check:</strong> with the plugin on a site (<a href="#9-try-it-on-a-site">step 9</a>), run
+<code>npx lighthouse http://localhost:3000/hello --only-categories=seo,accessibility</code>. SEO
+scores 100, and accessibility reports nothing inside your plugin&#39;s markup. <code>curl</code> the
+page: the title, description, canonical link, structured data and the page&#39;s main
+content are all in the HTML. On another page of the site, the widget causes no layout
+shift.</p>
+<h2 id="8-build-and-commit"><a class="anchor" href="#8-build-and-commit" aria-label="Link to this section">#</a>8. Build and commit</h2>
+<div class="code"><div class="code-head"><span>bash</span><button type="button" class="code-copy" data-copy="npm run build
+npm run typecheck"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code>npm run build
+npm run typecheck</code></pre></div>
+<p>The build writes, per plugin:</p>
+<div class="table"><table>
+<thead><tr><th>File</th><th>Contents</th></tr></thead>
+<tbody>
+<tr><td><code>dist/client.js</code></td><td>The components, minified</td></tr>
+<tr><td><code>dist/server.js</code></td><td>Loaders and endpoints, self-contained</td></tr>
+<tr><td><code>dist/style.css</code></td><td>Any CSS the client entry imports</td></tr>
+<tr><td><code>dist/build.json</code></td><td>The manifest, the icon, and a fingerprint of every file</td></tr>
+</tbody>
+</table></div>
+<p>It stops with a plain message when the manifest names a component the client entry
+does not export, when the server entry has a loader for a page that does not exist, or
+when an endpoint key is malformed. Lines that start with <code>!</code> are advice that does not
+stop the build, such as a page with no description for search results. Act on them.
+<code>--no-minify</code> keeps the client bundle readable.</p>
+<p><strong>Commit <code>dist/</code> together with the source change that produced it.</strong> Sites install from
+the repository at an exact commit and refuse any file that does not match the
+fingerprint in <code>build.json</code>. Builds are reproducible: rebuilding without changes leaves
+<code>dist/</code> untouched.</p>
+<p>Sites accept bundles up to 3 MB for <code>client.js</code>, 5 MB for <code>server.js</code> and 1 MB for
+<code>style.css</code>.</p>
+<p class="check"><strong>Check:</strong> after <code>npm run build</code>, <code>git status</code> shows <code>dist/</code> changes only if the source
+or manifest changed. Commit them.</p>
+<h2 id="9-try-it-on-a-site"><a class="anchor" href="#9-try-it-on-a-site" aria-label="Link to this section">#</a>9. Try it on a site</h2>
+<p>A site in development accepts a folder on the same machine as a source.</p>
+<ol>
+<li>Run a site that has NextPluggable (<a href="../integrate/">integration guide</a>)
+with <code>next dev</code>.</li>
+<li>Open <code>/admin/plugins</code>, sign in, and go to <strong>Sources</strong>.</li>
+<li>Enter the absolute path of the repository folder and connect it.</li>
+<li>Under <strong>Add plugins</strong>, install the plugin. Open its page.</li>
+<li>After each rebuild, press <strong>Check for updates</strong>, then <strong>Update</strong>.</li>
+</ol>
+<p>Check these before calling the plugin finished:</p>
+<ul>
+<li>The page&#39;s content is in the HTML the server sends (<code>curl</code> the address). That is what
+search engines read.</li>
+<li>Lighthouse gives the page an SEO score of 100 (<a href="#7-get-the-seo-right">step 7</a>).</li>
+<li>The settings form makes sense to someone who has never seen the code.</li>
+<li>The page takes on the site&#39;s colours and font, and sits between the site&#39;s own
+header and footer.</li>
+<li>The page still works after the owner changes its address in the dashboard.</li>
+<li>Nothing in the browser console reports a hydration mismatch.</li>
+</ul>
+<h2 id="10-publish-and-update"><a class="anchor" href="#10-publish-and-update" aria-label="Link to this section">#</a>10. Publish and update</h2>
+<p>Push the repository to GitHub. The site&#39;s owner connects it under <strong>Sources</strong> by
+pasting its address. All of these forms work:</p>
+<div class="table"><table>
+<thead><tr><th>Address</th><th>Follows</th></tr></thead>
+<tbody>
+<tr><td><code>https://github.com/acme/acme-plugins</code> or <code>acme/acme-plugins</code></td><td>The default branch</td></tr>
+<tr><td><code>https://github.com/acme/acme-plugins/tree/stable</code></td><td>The branch or tag <code>stable</code></td></tr>
+<tr><td><code>https://github.com/acme/acme-plugins/tree/main/packages/plugins</code></td><td>A subfolder that holds <code>nextpluggable.json</code> or a single plugin</td></tr>
+</tbody>
+</table></div>
+<p>For a private repository, the owner ticks <strong>This repository is private</strong> and pastes a
+read-only access token. The dashboard walks them through creating one.</p>
+<p>To release an update:</p>
+<ol>
+<li>Change the source.</li>
+<li>Raise <code>version</code> in <code>plugin.json</code>.</li>
+<li>Run <code>npm run build</code>.</li>
+<li>Commit source and <code>dist/</code> together, and push.</li>
+</ol>
+<p>The owner&#39;s dashboard offers the update. Their settings and the plugin&#39;s stored data
+are kept.</p>
+<p><strong>Never change after release:</strong> the plugin <code>id</code> (it becomes a different plugin), a page
+<code>id</code> (the owner&#39;s chosen address is lost), or a setting <code>key</code> (the owner&#39;s value is
+lost).</p>
+<p>To have CI refuse a stale <code>dist/</code>:</p>
+<div class="code"><div class="code-head"><span>yaml</span><button type="button" class="code-copy" data-copy="# .github/workflows/check.yml
+name: Check
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - name: dist/ must match the source
+        run: test -z &quot;$(git status --porcelain)&quot; || (git status --short &amp;&amp; exit 1)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment"># .github/workflows/check.yml</span>
+<span class="hljs-attr">name:</span> <span class="hljs-string">Check</span>
+<span class="hljs-attr">on:</span> [<span class="hljs-string">push</span>, <span class="hljs-string">pull_request</span>]
+<span class="hljs-attr">jobs:</span>
+  <span class="hljs-attr">check:</span>
+    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-latest</span>
+    <span class="hljs-attr">steps:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v7</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/setup-node@v7</span>
+        <span class="hljs-attr">with:</span>
+          <span class="hljs-attr">node-version:</span> <span class="hljs-number">24</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">run:</span> <span class="hljs-string">npm</span> <span class="hljs-string">ci</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">run:</span> <span class="hljs-string">npm</span> <span class="hljs-string">run</span> <span class="hljs-string">typecheck</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">run:</span> <span class="hljs-string">npm</span> <span class="hljs-string">run</span> <span class="hljs-string">build</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">dist/</span> <span class="hljs-string">must</span> <span class="hljs-string">match</span> <span class="hljs-string">the</span> <span class="hljs-string">source</span>
+        <span class="hljs-attr">run:</span> <span class="hljs-string">test</span> <span class="hljs-string">-z</span> <span class="hljs-string">&quot;$(git status --porcelain)&quot;</span> <span class="hljs-string">||</span> <span class="hljs-string">(git</span> <span class="hljs-string">status</span> <span class="hljs-string">--short</span> <span class="hljs-string">&amp;&amp;</span> <span class="hljs-string">exit</span> <span class="hljs-number">1</span><span class="hljs-string">)</span></code></pre></div>
+<h2 id="add-this-to-claudemd"><a class="anchor" href="#add-this-to-claudemd" aria-label="Link to this section">#</a>Add this to CLAUDE.md</h2>
+<p>Put this block in the <code>CLAUDE.md</code> at the root of the plugin repository. Adjust the
+layout lines if the repository holds a single plugin at its root.</p>
+<div class="code"><div class="code-head"><span>markdown</span><button type="button" class="code-copy" data-copy="## NextPluggable plugins
+
+This repository is a NextPluggable plugin source. Sites install plugins straight from
+it at an exact commit, using the built files in each plugin's `dist/`.
+Full guide: https://rohittp0.github.io/NextPluggable/build.md
+Guide revision this repository follows: 3
+
+At the start of every task in this repository, fetch the guide and compare its
+&quot;Guide revision&quot; with the number above. If the guide is newer, read its &quot;Changes to
+this guide&quot; section, apply every change since the revision above to every plugin
+here (rebuild, raise each changed plugin's version, commit `dist/`), replace this
+block with the guide's current one, and only then start the task. Read the guide
+itself before creating a plugin or changing a manifest.
+
+### Layout
+
+- `nextpluggable.json` lists every plugin folder. A new plugin must be added to it and
+  to the `build` and `validate` scripts in `package.json`.
+- `plugins/&lt;id&gt;/plugin.json` is the manifest.
+- `plugins/&lt;id&gt;/src/client.tsx` exports the React components the manifest names.
+- `plugins/&lt;id&gt;/src/server.ts` (optional) default-exports
+  `definePluginServer({ pages, api })`.
+- `plugins/&lt;id&gt;/dist/` is build output.
+
+### Commands
+
+- `npm run build` rebuilds every plugin's `dist/`.
+- `npm run typecheck` type-checks the sources.
+- `npm run validate` checks the manifests without building.
+
+### Rules
+
+- After any change under `plugins/&lt;id&gt;/`, source or `plugin.json`, run the build and
+  commit `dist/` in the same commit. Never edit `dist/` by hand and never add it to
+  `.gitignore`: sites refuse files that do not match `dist/build.json`.
+- Raise `version` in `plugin.json` with every change that should reach sites.
+- Never change a plugin `id`, a page `id` or a setting `key` after release. Sites key
+  installs, page addresses and saved settings on them.
+- Client code imports only `react`, `react-dom`, `@nextpluggable/plugin` and packages
+  that can be bundled. No `next/*` imports, server components or server actions.
+- Components render on the server first. Do not touch `window`, `document` or
+  `localStorage` while rendering; use an effect.
+- Do not hard-code this plugin's page addresses or endpoint URLs. Use
+  `usePlugin().paths`, `ctx.paths` and `usePluginApi()`.
+- Server code never sees the query string. Use address parameters (`/shop/:slug`) and
+  read filters in the browser with `useQuery()`.
+- Endpoints are public unless wrapped in `adminOnly`. Validate all input.
+- The server entry must do no work and must not throw when it loads. It is loaded
+  during the build and on install.
+- Prefix every CSS class with the plugin's own prefix. There is no style isolation.
+- Take colours from the site: read `--np-accent`, `--np-accent-text`, `--np-text`,
+  `--np-muted`, `--np-border` and `--np-surface`, each with a fallback. Never give a colour setting
+  a default, never set `font-family`, and never render a header or footer.
+- Settings labels and help text are read by non-technical site owners. Use plain words.
+- SEO is the plugin's job. Every page has a `description` written for search results,
+  exactly one `&lt;h1&gt;`, its content in the server-rendered HTML, structured data that
+  fits it (`jsonLd`), and `noindex` when it offers searchers nothing. Pages with
+  parameters are listed by the `sitemap` hook.
+- A widget never shifts the page, has no headings, renders on the server, and stays
+  small. It runs on every page of the site.
+- Write for AI search too: the main content is in the HTML the server sends, a tool
+  comes with a sentence saying what it does, and the first paragraph answers the
+  question the page is about.
+- Accessible by default: text contrast of 4.5 to 1 (never hard-coded white on the
+  accent; use `--np-accent-text`), a `&lt;label&gt;` for every input, real `&lt;button&gt;` and
+  `&lt;a&gt;` elements, `alt` on images, and no horizontal scrolling on a phone."><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-section">## NextPluggable plugins</span>
+
+This repository is a NextPluggable plugin source. Sites install plugins straight from
+it at an exact commit, using the built files in each plugin&#x27;s <span class="hljs-code">`dist/`</span>.
+Full guide: https://rohittp0.github.io/NextPluggable/build.md
+Guide revision this repository follows: 3
+
+At the start of every task in this repository, fetch the guide and compare its
+&quot;Guide revision&quot; with the number above. If the guide is newer, read its &quot;Changes to
+this guide&quot; section, apply every change since the revision above to every plugin
+here (rebuild, raise each changed plugin&#x27;s version, commit <span class="hljs-code">`dist/`</span>), replace this
+block with the guide&#x27;s current one, and only then start the task. Read the guide
+itself before creating a plugin or changing a manifest.
+
+<span class="hljs-section">### Layout</span>
+
+<span class="hljs-bullet">-</span> <span class="hljs-code">`nextpluggable.json`</span> lists every plugin folder. A new plugin must be added to it and
+  to the <span class="hljs-code">`build`</span> and <span class="hljs-code">`validate`</span> scripts in <span class="hljs-code">`package.json`</span>.
+<span class="hljs-bullet">-</span> <span class="hljs-code">`plugins/&lt;id&gt;/plugin.json`</span> is the manifest.
+<span class="hljs-bullet">-</span> <span class="hljs-code">`plugins/&lt;id&gt;/src/client.tsx`</span> exports the React components the manifest names.
+<span class="hljs-bullet">-</span> <span class="hljs-code">`plugins/&lt;id&gt;/src/server.ts`</span> (optional) default-exports
+  <span class="hljs-code">`definePluginServer({ pages, api })`</span>.
+<span class="hljs-bullet">-</span> <span class="hljs-code">`plugins/&lt;id&gt;/dist/`</span> is build output.
+
+<span class="hljs-section">### Commands</span>
+
+<span class="hljs-bullet">-</span> <span class="hljs-code">`npm run build`</span> rebuilds every plugin&#x27;s <span class="hljs-code">`dist/`</span>.
+<span class="hljs-bullet">-</span> <span class="hljs-code">`npm run typecheck`</span> type-checks the sources.
+<span class="hljs-bullet">-</span> <span class="hljs-code">`npm run validate`</span> checks the manifests without building.
+
+<span class="hljs-section">### Rules</span>
+
+<span class="hljs-bullet">-</span> After any change under <span class="hljs-code">`plugins/&lt;id&gt;/`</span>, source or <span class="hljs-code">`plugin.json`</span>, run the build and
+  commit <span class="hljs-code">`dist/`</span> in the same commit. Never edit <span class="hljs-code">`dist/`</span> by hand and never add it to
+  <span class="hljs-code">`.gitignore`</span>: sites refuse files that do not match <span class="hljs-code">`dist/build.json`</span>.
+<span class="hljs-bullet">-</span> Raise <span class="hljs-code">`version`</span> in <span class="hljs-code">`plugin.json`</span> with every change that should reach sites.
+<span class="hljs-bullet">-</span> Never change a plugin <span class="hljs-code">`id`</span>, a page <span class="hljs-code">`id`</span> or a setting <span class="hljs-code">`key`</span> after release. Sites key
+  installs, page addresses and saved settings on them.
+<span class="hljs-bullet">-</span> Client code imports only <span class="hljs-code">`react`</span>, <span class="hljs-code">`react-dom`</span>, <span class="hljs-code">`@nextpluggable/plugin`</span> and packages
+  that can be bundled. No <span class="hljs-code">`next/*`</span> imports, server components or server actions.
+<span class="hljs-bullet">-</span> Components render on the server first. Do not touch <span class="hljs-code">`window`</span>, <span class="hljs-code">`document`</span> or
+  <span class="hljs-code">`localStorage`</span> while rendering; use an effect.
+<span class="hljs-bullet">-</span> Do not hard-code this plugin&#x27;s page addresses or endpoint URLs. Use
+  <span class="hljs-code">`usePlugin().paths`</span>, <span class="hljs-code">`ctx.paths`</span> and <span class="hljs-code">`usePluginApi()`</span>.
+<span class="hljs-bullet">-</span> Server code never sees the query string. Use address parameters (<span class="hljs-code">`/shop/:slug`</span>) and
+  read filters in the browser with <span class="hljs-code">`useQuery()`</span>.
+<span class="hljs-bullet">-</span> Endpoints are public unless wrapped in <span class="hljs-code">`adminOnly`</span>. Validate all input.
+<span class="hljs-bullet">-</span> The server entry must do no work and must not throw when it loads. It is loaded
+  during the build and on install.
+<span class="hljs-bullet">-</span> Prefix every CSS class with the plugin&#x27;s own prefix. There is no style isolation.
+<span class="hljs-bullet">-</span> Take colours from the site: read <span class="hljs-code">`--np-accent`</span>, <span class="hljs-code">`--np-accent-text`</span>, <span class="hljs-code">`--np-text`</span>,
+  <span class="hljs-code">`--np-muted`</span>, <span class="hljs-code">`--np-border`</span> and <span class="hljs-code">`--np-surface`</span>, each with a fallback. Never give a colour setting
+  a default, never set <span class="hljs-code">`font-family`</span>, and never render a header or footer.
+<span class="hljs-bullet">-</span> Settings labels and help text are read by non-technical site owners. Use plain words.
+<span class="hljs-bullet">-</span> SEO is the plugin&#x27;s job. Every page has a <span class="hljs-code">`description`</span> written for search results,
+  exactly one <span class="hljs-code">`&lt;h1&gt;`</span>, its content in the server-rendered HTML, structured data that
+  fits it (<span class="hljs-code">`jsonLd`</span>), and <span class="hljs-code">`noindex`</span> when it offers searchers nothing. Pages with
+  parameters are listed by the <span class="hljs-code">`sitemap`</span> hook.
+<span class="hljs-bullet">-</span> A widget never shifts the page, has no headings, renders on the server, and stays
+  small. It runs on every page of the site.
+<span class="hljs-bullet">-</span> Write for AI search too: the main content is in the HTML the server sends, a tool
+  comes with a sentence saying what it does, and the first paragraph answers the
+  question the page is about.
+<span class="hljs-bullet">-</span> Accessible by default: text contrast of 4.5 to 1 (never hard-coded white on the
+  accent; use <span class="hljs-code">`--np-accent-text`</span>), a <span class="hljs-code">`&lt;label&gt;`</span> for every input, real <span class="hljs-code">`&lt;button&gt;`</span> and
+  <span class="hljs-code">`&lt;a&gt;`</span> elements, <span class="hljs-code">`alt`</span> on images, and no horizontal scrolling on a phone.</code></pre></div>
+<h2 id="changes-to-this-guide"><a class="anchor" href="#changes-to-this-guide" aria-label="Link to this section">#</a>Changes to this guide</h2>
+<p>Newest first. Each entry says what to change in plugins written before it.</p>
+<h3 id="revision-3"><a class="anchor" href="#revision-3" aria-label="Link to this section">#</a>Revision 3</h3>
+<p>SEO became the plugin&#39;s job, with defaults from the site.</p>
+<ul>
+<li>Give every page in <code>plugin.json</code> a <code>description</code> written for search results.</li>
+<li>Return <code>jsonLd</code> that fits each page&#39;s content from its loader.</li>
+<li>Add a <code>sitemap</code> function to the server entry of any plugin whose pages have
+parameters.</li>
+<li>Return <code>noindex: true</code> for pages that offer searchers nothing.</li>
+<li>Check every widget against the <a href="#widgets">widget rules</a>: no layout shift, no
+headings, rendered on the server, small.</li>
+<li>Check every page against the rules <a href="#for-ai-search">for AI search</a> and
+<a href="#for-everyone-who-uses-the-page">for everyone who uses the page</a>.</li>
+<li>Replace hard-coded white text on the accent with <code>--np-accent-text</code>, falling back
+to a colour worked out from the accent (<a href="#6-style-it">step 6</a>).</li>
+<li>New, optional loader metadata: <code>imageAlt</code>, <code>type</code>, <code>publishedTime</code>, <code>modifiedTime</code>.</li>
+<li>The build prints advice lines that start with <code>!</code>. Clear them.</li>
+</ul>
+<h3 id="revision-2"><a class="anchor" href="#revision-2" aria-label="Link to this section">#</a>Revision 2</h3>
+<p>Plugins take their look from the site.</p>
+<ul>
+<li>Read <code>--np-accent</code>, <code>--np-text</code>, <code>--np-muted</code>, <code>--np-border</code> and <code>--np-surface</code>,
+each with a fallback, in place of colours of your own.</li>
+<li>Remove the <code>default</code> from every colour setting, and apply the owner&#39;s colour only
+when they chose one.</li>
+<li>Do not set <code>font-family</code>, and do not render a header or footer.</li>
+</ul>
+<h3 id="revision-1"><a class="anchor" href="#revision-1" aria-label="Link to this section">#</a>Revision 1</h3>
+<p>The first version of this guide.</p>
+<h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2>
+<div class="table"><table>
+<thead><tr><th>Message or symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+<tbody>
+<tr><td><code>Invalid plugin manifest:</code> followed by a list</td><td><code>plugin.json</code> breaks a rule from <a href="#3-write-the-manifest">step 3</a></td><td>Fix each listed item</td></tr>
+<tr><td><code>plugin.json refers to component &quot;X&quot;, but the client entry does not export it</code></td><td>A name in the manifest has no matching export</td><td>Export it from <code>src/client.tsx</code>, or fix the name</td></tr>
+<tr><td><code>The server entry must export default definePluginServer({ ... })</code></td><td>No default export</td><td>Add it</td></tr>
+<tr><td><code>The server entry has a loader for page &quot;x&quot;, which plugin.json does not declare</code></td><td>A key under <code>pages</code> matches no page <code>id</code></td><td>Make them match</td></tr>
+<tr><td><code>API route &quot;…&quot; must look like &quot;GET /path&quot;</code></td><td>A malformed endpoint key</td><td>Use one of the five methods, a space, then a path starting with <code>/</code></td></tr>
+<tr><td><code>The server entry throws when loaded</code></td><td>Top-level code that fails</td><td>Move the work into a loader, a handler or <code>onInstall</code></td></tr>
+<tr><td><code>Cannot require &quot;x&quot;: server bundles may only use Node built-ins at runtime</code></td><td>A package was left out of the bundle</td><td>Import it normally so it is bundled, or drop it</td></tr>
+<tr><td><code>Building plugins needs esbuild</code></td><td><code>esbuild</code> is not installed</td><td><code>npm install --save-dev esbuild</code></td></tr>
+<tr><td>A build line starting with <code>!</code></td><td>Advice for search engines, such as a page with no <code>description</code></td><td>Fix what it names. The build still succeeds</td></tr>
+<tr><td>The dashboard says the source &quot;does not look like a plugin source&quot;</td><td>No <code>nextpluggable.json</code> and no built plugin at the top level</td><td>Add the index file, or build and commit <code>dist/</code></td></tr>
+<tr><td>&quot;This plugin has not been built yet&quot;</td><td><code>dist/build.json</code> is missing for a listed folder</td><td>Build and commit</td></tr>
+<tr><td>&quot;This plugin failed its integrity check&quot;</td><td><code>dist/</code> was edited by hand, or is stale</td><td>Rebuild and commit <code>dist/</code> unchanged</td></tr>
+<tr><td>The page appears, then its content flickers or the console reports a hydration mismatch</td><td>The first render differs between server and browser</td><td>Render the same output first; change it in an effect</td></tr>
+<tr><td>A widget does not appear on a site</td><td>The site&#39;s layout has no slot with that name</td><td>Ask the site&#39;s developer to add it, or use <code>body.end</code></td></tr>
+<tr><td><code>usePluginConfig()</code> lacks a value</td><td>The setting is <code>secret</code> or <code>serverOnly</code></td><td>Read it in server code and pass on only what the browser may see</td></tr>
+</tbody>
+</table></div>
+<h2 id="done-when"><a class="anchor" href="#done-when" aria-label="Link to this section">#</a>Done when</h2>
+<ul>
+<li><input disabled="" type="checkbox"> <code>npm run build</code> and <code>npm run typecheck</code> pass.</li>
+<li><input disabled="" type="checkbox"> <code>dist/</code> is committed and matches the source.</li>
+<li><input disabled="" type="checkbox"> The plugin installs on a site from the repository, and its page, widgets and
+settings work.</li>
+<li><input disabled="" type="checkbox"> The page&#39;s content is in the server-rendered HTML, and Lighthouse gives it an SEO
+score of 100.</li>
+<li><input disabled="" type="checkbox"> Widgets cause no layout shift on the site&#39;s other pages.</li>
+<li><input disabled="" type="checkbox"> <code>CLAUDE.md</code> holds the block above, with the current guide revision.</li>
+</ul>
+<p>The two reference plugins are worth reading:
+<a href="https://github.com/rohittp0/NextPluggable/tree/main/plugins/emi-calculator" rel="noopener">EMI Calculator</a>,
+a page with settings only, and
+<a href="https://github.com/rohittp0/NextPluggable/tree/main/plugins/enquiry-form" rel="noopener">Enquiry Form</a>,
+with a page, endpoints, stored data, a layout widget, a dashboard screen and a secret
+setting.</p>
+
+    <nav class="next" aria-label="Other guide">
+      <a href="../integrate/"><span>Other guide</span><strong>Integrate <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></strong></a>
+    </nav>
+  </main>
+</div>
+<footer class="foot">
+  <div class="foot-in">
+    <p>NextPluggable is a working prototype. Plugins are trusted code: connect only sources you trust.</p>
+    <nav aria-label="More">
+      <a href="https://github.com/rohittp0/NextPluggable">GitHub</a>
+      <a href="https://www.npmjs.com/package/nextpluggable">npm</a>
+      <a href="../llms.txt">llms.txt</a>
+      <a href="https://github.com/rohittp0/NextPluggable/blob/main/docs/research.md">Why it is built this way</a>
+    </nav>
+  </div>
+</footer>
+<script src="../assets/site.js" defer></script>
+</body>
+</html>

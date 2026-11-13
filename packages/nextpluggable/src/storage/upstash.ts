@@ -26,7 +26,12 @@ export function upstashStorage(options: UpstashStorageOptions = {}): StorageAdap
 
   async function command<T>(...args: (string | number)[]): Promise<T> {
     const { url, token } = creds();
-    const res = await fetch(url, {
+    // Next.js wraps `fetch`, and an uncached request through that wrapper makes it refuse to
+    // prerender the page being rendered: every static page with a plugin slot in its layout
+    // would fail to build or turn dynamic. Storage reads are neither cached by Next.js nor a
+    // reason to render per request, so they go through the fetch that Next.js wrapped.
+    const send = (globalThis.fetch as typeof fetch & { _nextOriginalFetch?: typeof fetch })._nextOriginalFetch ?? globalThis.fetch;
+    const res = await send(url, {
       method: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
       body: JSON.stringify(args),

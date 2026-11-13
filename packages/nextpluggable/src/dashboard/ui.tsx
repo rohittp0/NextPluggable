@@ -175,7 +175,7 @@ export function SettingInput(props: {
       control = (
         <span className="np-color">
           <input type="color" aria-label={`${field.label} picker`} value={/^#[0-9a-f]{6}$/i.test(String(value)) ? String(value) : '#000000'} onChange={(e) => onChange(e.target.value)} />
-          <input {...common} style={{ maxWidth: 140 }} value={(value as string) ?? ''} placeholder="#2563eb" onChange={(e) => onChange(e.target.value)} />
+          <input {...common} style={{ maxWidth: 140 }} value={(value as string) ?? ''} placeholder={field.placeholder ?? '#2563eb'} onChange={(e) => onChange(e.target.value)} />
         </span>
       );
       break;
