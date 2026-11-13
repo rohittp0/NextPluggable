@@ -13,6 +13,12 @@ a settings form, and its own screens inside the dashboard.
 > implemented and covered by tests in this repository. See [Limits](#limits) before
 > relying on it, and [docs/research.md](docs/research.md) for why it is built this way.
 
+**Documentation: <https://rohittp0.github.io/NextPluggable/>.** Each guide also exists
+as Markdown written for coding agents: give yours
+[`integrate.md`](https://rohittp0.github.io/NextPluggable/integrate.md) to add
+NextPluggable to a site, or
+[`build.md`](https://rohittp0.github.io/NextPluggable/build.md) to write plugins.
+
 ## What the site owner does
 
 1. Opens `/admin/plugins` and signs in.
@@ -118,7 +124,7 @@ npx nextpluggable-plugin build
 
 A repository can hold one plugin at its root, or several listed in a root
 `nextpluggable.json`. Hosts install straight from the repository at an exact commit.
-The full guide is in [docs/writing-plugins.md](docs/writing-plugins.md).
+The full guide is in [docs/build.md](docs/build.md).
 
 This repository is itself a plugin source with two reference plugins:
 
@@ -230,7 +236,8 @@ SDK only makes it available in the browser.
 | `packages/plugin` | `@nextpluggable/plugin`: the SDK and build tool for plugin authors |
 | `plugins/` | Reference plugins, with their built `dist/` committed |
 | `e2e/` | Browser test of the whole owner journey against a mock GitHub API, and the small Next.js site (`e2e/site`) it runs against |
-| `docs/` | [Research and decisions](docs/research.md), [writing plugins](docs/writing-plugins.md) |
+| `docs/` | The documentation site, served by GitHub Pages: the guides ([integrate](docs/integrate.md), [build plugins](docs/build.md)) and [research and decisions](docs/research.md) |
+| `scripts/` | The release version script and the documentation site generator |
 
 ### Checks
 
@@ -243,6 +250,14 @@ pnpm e2e          # browser test, run twice (pages uncached, then cached); needs
 
 Rebuilding the plugins must leave `plugins/*/dist` unchanged: builds are reproducible,
 and the committed output is what sites install.
+
+### Documentation site
+
+GitHub Pages serves the `docs/` folder as it is. The guides are written once, as
+`docs/integrate.md` and `docs/build.md`: those files are what coding agents read, and
+`pnpm docs:build` renders them to the HTML pages people read. Commit the generated
+pages with the Markdown change; `pnpm test` fails when they are out of date. Changes
+under `docs/` do not publish a release.
 
 ### Releases
 

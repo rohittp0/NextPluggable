@@ -1,0 +1,15 @@
+# NextPluggable
+
+> WordPress-style plugins for Next.js. One package gives a site a dashboard where its owner installs, configures, updates and removes plugins from GitHub repositories, with no rebuild and no redeploy.
+
+Each guide below is a complete, self-contained instruction set written for coding agents.
+
+## Guides
+
+- [Integrate](https://rohittp0.github.io/NextPluggable/integrate.md): Add the dashboard, API route, plugin pages and layout slots to an existing Next.js site.
+- [Build plugins](https://rohittp0.github.io/NextPluggable/build.md): Set up a plugin repository, write the manifest, components and server code, and ship updates.
+
+## Optional
+
+- [Research and decisions](https://rohittp0.github.io/NextPluggable/research.md): why plugins are loaded at runtime, and the limits that follow
+- [Source code](https://github.com/rohittp0/NextPluggable)

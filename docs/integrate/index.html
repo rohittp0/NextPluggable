@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Integrate NextPluggable into a Next.js site · NextPluggable</title>
+<meta name="description" content="NextPluggable gives a Next.js site a plugin dashboard. The site's owner connects GitHub repositories that hold plugins, then installs, configures, updates and removes those plugins from the dashboard, with no rebuild and no redeploy. This guide adds it to an existing site. It is a one-time job for a developer.">
+<link rel="canonical" href="https://rohittp0.github.io/NextPluggable/integrate/">
+<meta property="og:title" content="Integrate NextPluggable into a Next.js site · NextPluggable">
+<meta property="og:description" content="NextPluggable gives a Next.js site a plugin dashboard. The site's owner connects GitHub repositories that hold plugins, then installs, configures, updates and removes those plugins from the dashboard, with no rebuild and no redeploy. This guide adds it to an existing site. It is a one-time job for a developer.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rohittp0.github.io/NextPluggable/integrate/">
+<meta name="color-scheme" content="light dark">
+<link rel="alternate" type="text/markdown" href="https://rohittp0.github.io/NextPluggable/integrate.md" title="This page as Markdown, for coding agents">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+<script>try{var t=localStorage.getItem('np-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="../"><svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="var(--primary)"/><path d="M14 7.5 20.5 14 14 20.5 7.5 14z" fill="var(--on-primary)"/></svg><span>NextPluggable</span></a>
+    <nav class="top-nav" aria-label="Guides"><a href="../integrate/" aria-current="page">Integrate</a><a href="../build/">Build plugins</a></nav>
+    <div class="top-tools">
+      <a class="top-link" href="https://github.com/rohittp0/NextPluggable">GitHub <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 3H3.5A1.5 1.5 0 0 0 2 4.5v8A1.5 1.5 0 0 0 3.5 14h8a1.5 1.5 0 0 0 1.5-1.5V10M9 2h5v5M14 2 7.5 8.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <button type="button" class="icon-btn" data-theme-toggle aria-label="Switch between light and dark"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="5.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2.75a5.25 5.25 0 0 1 0 10.5z" fill="currentColor"/></svg></button>
+    </div>
+  </div>
+</header>
+<div class="doc">
+  <aside class="side">
+    <details class="toc" open>
+      <summary>On this page</summary>
+      <ul>
+<li class="toc-2"><a href="#what-gets-added">What gets added</a></li>
+<li class="toc-2"><a href="#before-you-start">Before you start</a></li>
+<li class="toc-2"><a href="#1-install-the-package">1. Install the package</a></li>
+<li class="toc-2"><a href="#2-run-the-setup-command">2. Run the setup command</a></li>
+<li class="toc-2"><a href="#3-set-the-environment-variables">3. Set the environment variables</a></li>
+<li class="toc-2"><a href="#4-choose-where-data-lives">4. Choose where data lives</a></li>
+<li class="toc-2"><a href="#5-choose-who-can-sign-in">5. Choose who can sign in</a></li>
+<li class="toc-2"><a href="#6-add-slots-to-the-layout">6. Add slots to the layout</a></li>
+<li class="toc-2"><a href="#7-serve-plugin-pages">7. Serve plugin pages</a></li>
+<li class="toc-3"><a href="#the-site-has-no-root-catch-all">The site has no root catch-all</a></li>
+<li class="toc-3"><a href="#the-site-already-has-a-catch-all-that-returns-404-for-unknown-addresses">The site already has a catch-all that returns 404 for unknown addresses</a></li>
+<li class="toc-3"><a href="#the-sites-catch-all-never-returns-404">The site&#39;s catch-all never returns 404</a></li>
+<li class="toc-3"><a href="#caching-plugin-pages-optional">Caching plugin pages (optional)</a></li>
+<li class="toc-2"><a href="#8-sites-with-locale-routing-or-other-middleware">8. Sites with locale routing or other middleware</a></li>
+<li class="toc-2"><a href="#9-verify">9. Verify</a></li>
+<li class="toc-2"><a href="#10-deploy">10. Deploy</a></li>
+<li class="toc-2"><a href="#settings-reference">Settings reference</a></li>
+<li class="toc-2"><a href="#security">Security</a></li>
+<li class="toc-2"><a href="#limits">Limits</a></li>
+<li class="toc-2"><a href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-2"><a href="#done-when">Done when</a></li>
+      </ul>
+    </details>
+  </aside>
+  <main id="content" class="article">
+    <p class="kicker">Guide</p>
+    <h1>Integrate NextPluggable into a Next.js site</h1>
+    <div class="lead"><p>NextPluggable gives a Next.js site a plugin dashboard. The site&#39;s owner connects GitHub
+repositories that hold plugins, then installs, configures, updates and removes those
+plugins from the dashboard, with no rebuild and no redeploy. This guide adds it to an
+existing site. It is a one-time job for a developer.</p>
+</div>
+    <section class="agent-box" aria-label="This page for coding agents">
+      <p class="agent-box-title">Working with a coding agent? Give it this page as Markdown.</p>
+      <div class="agent-field">
+  <a class="agent-url" href="../integrate.md" data-agent-url="../integrate.md">https://rohittp0.github.io/NextPluggable/integrate.md</a>
+  <button type="button" class="btn btn-primary" data-copy="https://rohittp0.github.io/NextPluggable/integrate.md" data-copy-url="../integrate.md" aria-label="Copy the address of the integrate guide"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy URL</span></button>
+</div>
+<p class="agent-more"><button type="button" class="link" data-copy="Read https://rohittp0.github.io/NextPluggable/integrate.md and follow it to add NextPluggable to this Next.js project." data-copy-url="../integrate.md" data-copy-prompt="Read {url} and follow it to add NextPluggable to this Next.js project.">Copy as a prompt</button></p>
+    </section>
+<h2 id="what-gets-added"><a class="anchor" href="#what-gets-added" aria-label="Link to this section">#</a>What gets added</h2>
+<div class="table"><table>
+<thead><tr><th>Piece</th><th>Where</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td>Setup module</td><td><code>lib/nextpluggable.ts</code></td><td>One <code>createNextPluggable()</code> call: sign-in, storage, site name</td></tr>
+<tr><td>Dashboard</td><td><code>app/admin/plugins/[[...np]]/page.tsx</code></td><td>The screen the owner uses, at <code>/admin/plugins</code></td></tr>
+<tr><td>API route</td><td><code>app/api/nextpluggable/[...np]/route.ts</code></td><td>The dashboard&#39;s API, plugin files, and plugins&#39; own endpoints</td></tr>
+<tr><td>Plugin pages</td><td><code>app/[...slug]/page.tsx</code></td><td>Serves the pages plugins add. Your own routes always win</td></tr>
+<tr><td>Slots (optional)</td><td>Your layout</td><td>Named places plugins may fill, such as a floating button</td></tr>
+</tbody>
+</table></div>
+<p>Plugins are not part of your build. A plugin ships prebuilt bundles; the site stores
+them, server-renders the plugin&#39;s React components with its own React, and hydrates
+them in the browser.</p>
+<h2 id="before-you-start"><a class="anchor" href="#before-you-start" aria-label="Link to this section">#</a>Before you start</h2>
+<p>Check each of these. Stop if one fails.</p>
+<ul>
+<li><strong>Next.js 15 or newer, using the App Router</strong>, with React 19. There must be an <code>app</code>
+or <code>src/app</code> directory.</li>
+<li><strong>Node.js runtime, 20.16 or newer.</strong> It does not run on the Edge runtime or on
+Cloudflare Workers, because it evaluates plugin code at runtime.</li>
+<li><strong><code>cacheComponents</code> is off.</strong> With <code>cacheComponents: true</code> in <code>next.config</code>, the
+build fails. This mode is not supported yet.</li>
+<li><strong>You know where data will live.</strong> A long-running server with a disk can use the
+default file storage. A serverless host such as Vercel has a read-only disk and
+needs a database adapter (<a href="#4-choose-where-data-lives">step 4</a>).</li>
+</ul>
+<p>Then look for three things that change the steps below, and note what you find:</p>
+<ol>
+<li><strong>A catch-all route at the top of <code>app</code></strong> (a folder named <code>[...something]</code> or
+<code>[[...something]]</code>, directly in <code>app</code> or under a dynamic segment such as
+<code>app/[locale]</code>). If there is one, plugin pages are served from it
+(<a href="#7-serve-plugin-pages">step 7</a>).</li>
+<li><strong>Middleware that rewrites or redirects every path</strong>, typically for locales. The
+dashboard must be excluded from it (<a href="#8-sites-with-locale-routing-or-other-middleware">step 8</a>).</li>
+<li><strong>A root layout that does not render <code>&lt;html&gt;</code></strong> (a pass-through that leaves it to a
+nested layout). The dashboard then needs a layout of its own (step 8).</li>
+</ol>
+<h2 id="1-install-the-package"><a class="anchor" href="#1-install-the-package" aria-label="Link to this section">#</a>1. Install the package</h2>
+<div class="code"><div class="code-head"><span>bash</span><button type="button" class="code-copy" data-copy="npm install nextpluggable@latest"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code>npm install nextpluggable@latest</code></pre></div>
+<p>Use the site&#39;s own package manager: <code>pnpm add nextpluggable@latest</code> or
+<code>yarn add nextpluggable@latest</code>.</p>
+<p class="check"><strong>Check:</strong> <code>nextpluggable</code> is listed under <code>dependencies</code> in <code>package.json</code>.</p>
+<h2 id="2-run-the-setup-command"><a class="anchor" href="#2-run-the-setup-command" aria-label="Link to this section">#</a>2. Run the setup command</h2>
+<p>From the project root:</p>
+<div class="code"><div class="code-head"><span>bash</span><button type="button" class="code-copy" data-copy="npx nextpluggable@latest init"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code>npx nextpluggable@latest init</code></pre></div>
+<p>It creates the four files in the table above and never overwrites a file that already
+exists. It also:</p>
+<ul>
+<li>appends <code>NEXTPLUGGABLE_PASSWORD</code> and <code>NEXTPLUGGABLE_SECRET</code> to <code>.env.local</code>, with
+generated values, unless they are already there;</li>
+<li>adds <code>.nextpluggable/</code> to <code>.gitignore</code>;</li>
+<li>skips the plugin-pages route and prints a note if the site already has a root
+catch-all.</li>
+</ul>
+<p>In a JavaScript project the files are <code>.js</code> and <code>.jsx</code>. With a <code>src/app</code> directory the
+setup module goes to <code>src/lib/nextpluggable.ts</code>.</p>
+<p>The command only notices a catch-all that sits directly in <code>app</code>. If the site&#39;s
+catch-all is deeper, such as <code>app/[locale]/[[...route]]</code>, the generated
+<code>app/[...slug]/page.tsx</code> would never be reached: delete it and serve plugin pages from
+the existing route (<a href="#7-serve-plugin-pages">step 7</a>).</p>
+<p>If you cannot run the command, create the files by hand. These are their full contents:</p>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="// lib/nextpluggable.ts
+import { createNextPluggable } from 'nextpluggable';
+
+export const np = createNextPluggable({
+  siteName: 'My site',
+});"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// lib/nextpluggable.ts</span>
+<span class="hljs-keyword">import</span> { createNextPluggable } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;nextpluggable&#x27;</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> np = <span class="hljs-title function_">createNextPluggable</span>({
+  <span class="hljs-attr">siteName</span>: <span class="hljs-string">&#x27;My site&#x27;</span>,
+});</code></pre></div>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="// app/api/nextpluggable/[...np]/route.ts
+import { np } from '@/lib/nextpluggable';
+
+export const { GET, POST, PUT, PATCH, DELETE } = np.handlers;"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// app/api/nextpluggable/[...np]/route.ts</span>
+<span class="hljs-keyword">import</span> { np } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@/lib/nextpluggable&#x27;</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> { <span class="hljs-variable constant_">GET</span>, <span class="hljs-variable constant_">POST</span>, <span class="hljs-variable constant_">PUT</span>, <span class="hljs-variable constant_">PATCH</span>, <span class="hljs-variable constant_">DELETE</span> } = np.<span class="hljs-property">handlers</span>;</code></pre></div>
+<div class="code"><div class="code-head"><span>tsx</span><button type="button" class="code-copy" data-copy="// app/admin/plugins/[[...np]]/page.tsx
+import { np } from '@/lib/nextpluggable';
+
+export const metadata = np.dashboardMetadata;
+export default np.DashboardPage;"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// app/admin/plugins/[[...np]]/page.tsx</span>
+<span class="hljs-keyword">import</span> { np } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@/lib/nextpluggable&#x27;</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> metadata = np.<span class="hljs-property">dashboardMetadata</span>;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> np.<span class="hljs-property">DashboardPage</span>;</code></pre></div>
+<div class="code"><div class="code-head"><span>tsx</span><button type="button" class="code-copy" data-copy="// app/[...slug]/page.tsx
+import { np } from '@/lib/nextpluggable';
+
+export const generateMetadata = np.generatePluginMetadata;
+export default np.PluginPage;"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// app/[...slug]/page.tsx</span>
+<span class="hljs-keyword">import</span> { np } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@/lib/nextpluggable&#x27;</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> generateMetadata = np.<span class="hljs-property">generatePluginMetadata</span>;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> np.<span class="hljs-property">PluginPage</span>;</code></pre></div>
+<p>Adjust the import path if the project has no <code>@/</code> alias.</p>
+<p class="check"><strong>Check:</strong> the four files exist (three, if the site has its own catch-all), and
+<code>.env.local</code> holds both variables. Confirm <code>.env.local</code> is ignored by git.</p>
+<h2 id="3-set-the-environment-variables"><a class="anchor" href="#3-set-the-environment-variables" aria-label="Link to this section">#</a>3. Set the environment variables</h2>
+<div class="table"><table>
+<thead><tr><th>Variable</th><th>Required</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>NEXTPLUGGABLE_PASSWORD</code></td><td>Yes, with the default sign-in</td><td>The dashboard password</td></tr>
+<tr><td><code>NEXTPLUGGABLE_SECRET</code></td><td>In production</td><td>Signs sessions and encrypts stored secrets. At least 16 characters; use <code>openssl rand -base64 32</code>. Changing it signs everyone out and makes saved access tokens unreadable</td></tr>
+<tr><td><code>NEXT_PUBLIC_SITE_URL</code></td><td>Recommended</td><td>Public address of the site, such as <code>https://example.com</code>. Used for canonical links and to recognise the site&#39;s own requests behind a proxy</td></tr>
+<tr><td><code>NEXTPLUGGABLE_GITHUB_TOKEN</code></td><td>Optional</td><td>A GitHub token used for every source that has none of its own. Also lifts GitHub&#39;s limit of 60 requests an hour</td></tr>
+<tr><td><code>NEXTPLUGGABLE_DATA_DIR</code></td><td>Optional</td><td>Folder for the default file storage. Default: <code>.nextpluggable</code> in the project root</td></tr>
+<tr><td><code>UPSTASH_REDIS_REST_URL</code>, <code>UPSTASH_REDIS_REST_TOKEN</code></td><td>With <code>upstashStorage()</code></td><td>Upstash Redis REST credentials. <code>KV_REST_API_URL</code> and <code>KV_REST_API_TOKEN</code> are read as well</td></tr>
+</tbody>
+</table></div>
+<p>In development a missing secret is replaced by an insecure placeholder, with a warning.
+In production a missing secret is an error, and the dashboard says so.</p>
+<p>Set the same variables on the host before deploying. Add them, without values, to the
+project&#39;s <code>.env.example</code> if it has one.</p>
+<p class="check"><strong>Check:</strong> the production environment has a password and a secret that differ from the
+development ones.</p>
+<h2 id="4-choose-where-data-lives"><a class="anchor" href="#4-choose-where-data-lives" aria-label="Link to this section">#</a>4. Choose where data lives</h2>
+<p>Everything NextPluggable stores (connected sources, installed plugins, their bundles,
+settings and plugin data) goes through one storage adapter.</p>
+<div class="table"><table>
+<thead><tr><th>Adapter</th><th>Use it when</th></tr></thead>
+<tbody>
+<tr><td><code>fileStorage()</code> (default)</td><td>Local development, or one long-running server with a persistent disk</td></tr>
+<tr><td><code>upstashStorage()</code></td><td>Serverless hosts such as Vercel. Needs no extra dependency</td></tr>
+<tr><td><code>postgresStorage({ query })</code></td><td>The site already has Postgres</td></tr>
+<tr><td><code>memoryStorage()</code></td><td>Tests only. Data is lost on restart</td></tr>
+</tbody>
+</table></div>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="// lib/nextpluggable.ts
+import { createNextPluggable, postgresStorage, upstashStorage } from 'nextpluggable';
+
+// Upstash Redis: reads UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.
+export const np = createNextPluggable({
+  siteName: 'My site',
+  storage: upstashStorage(),
+});
+
+// Or Postgres, with whatever client the site already uses.
+// The table (default &quot;nextpluggable_kv&quot;) is created automatically.
+// storage: postgresStorage({ query: (text, params) =&gt; pool.query(text, params) }),"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// lib/nextpluggable.ts</span>
+<span class="hljs-keyword">import</span> { createNextPluggable, postgresStorage, upstashStorage } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;nextpluggable&#x27;</span>;
+
+<span class="hljs-comment">// Upstash Redis: reads UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> np = <span class="hljs-title function_">createNextPluggable</span>({
+  <span class="hljs-attr">siteName</span>: <span class="hljs-string">&#x27;My site&#x27;</span>,
+  <span class="hljs-attr">storage</span>: <span class="hljs-title function_">upstashStorage</span>(),
+});
+
+<span class="hljs-comment">// Or Postgres, with whatever client the site already uses.</span>
+<span class="hljs-comment">// The table (default &quot;nextpluggable_kv&quot;) is created automatically.</span>
+<span class="hljs-comment">// storage: postgresStorage({ query: (text, params) =&gt; pool.query(text, params) }),</span></code></pre></div>
+<p>A common pattern is the database in production and files in development:</p>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="const hasUpstash = Boolean(process.env.UPSTASH_REDIS_REST_URL &amp;&amp; process.env.UPSTASH_REDIS_REST_TOKEN);
+
+export const np = createNextPluggable({
+  siteName: 'My site',
+  storage: hasUpstash ? upstashStorage() : undefined, // undefined means fileStorage()
+});"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-keyword">const</span> hasUpstash = <span class="hljs-title class_">Boolean</span>(process.<span class="hljs-property">env</span>.<span class="hljs-property">UPSTASH_REDIS_REST_URL</span> &amp;&amp; process.<span class="hljs-property">env</span>.<span class="hljs-property">UPSTASH_REDIS_REST_TOKEN</span>);
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> np = <span class="hljs-title function_">createNextPluggable</span>({
+  <span class="hljs-attr">siteName</span>: <span class="hljs-string">&#x27;My site&#x27;</span>,
+  <span class="hljs-attr">storage</span>: hasUpstash ? <span class="hljs-title function_">upstashStorage</span>() : <span class="hljs-literal">undefined</span>, <span class="hljs-comment">// undefined means fileStorage()</span>
+});</code></pre></div>
+<p class="check"><strong>Check:</strong> on a serverless host, the adapter is not the default file storage. With file
+storage on such a host, installing a plugin fails with a read-only file system error.</p>
+<h2 id="5-choose-who-can-sign-in"><a class="anchor" href="#5-choose-who-can-sign-in" aria-label="Link to this section">#</a>5. Choose who can sign in</h2>
+<p>The default is one shared password, read from <code>NEXTPLUGGABLE_PASSWORD</code>. Sessions are
+signed, http-only cookies that last 7 days. Repeated wrong passwords are slowed down.</p>
+<p>To use the site&#39;s own login instead, pass <code>customAuth</code>. <code>getUser</code> receives the incoming
+request, with the visitor&#39;s cookies and headers, and returns the administrator or
+<code>null</code>:</p>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="import { createNextPluggable, customAuth } from 'nextpluggable';
+
+export const np = createNextPluggable({
+  siteName: 'My site',
+  auth: customAuth({
+    getUser: async (request) =&gt; {
+      const session = await getSessionSomehow(request); // Auth.js, Clerk, your own
+      return session?.role === 'admin' ? { id: session.userId, name: session.name } : null;
+    },
+    loginUrl: '/login', // where the dashboard sends people who are not signed in
+  }),
+});"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-keyword">import</span> { createNextPluggable, customAuth } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;nextpluggable&#x27;</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> np = <span class="hljs-title function_">createNextPluggable</span>({
+  <span class="hljs-attr">siteName</span>: <span class="hljs-string">&#x27;My site&#x27;</span>,
+  <span class="hljs-attr">auth</span>: <span class="hljs-title function_">customAuth</span>({
+    <span class="hljs-attr">getUser</span>: <span class="hljs-title function_">async</span> (request) =&gt; {
+      <span class="hljs-keyword">const</span> session = <span class="hljs-keyword">await</span> <span class="hljs-title function_">getSessionSomehow</span>(request); <span class="hljs-comment">// Auth.js, Clerk, your own</span>
+      <span class="hljs-keyword">return</span> session?.<span class="hljs-property">role</span> === <span class="hljs-string">&#x27;admin&#x27;</span> ? { <span class="hljs-attr">id</span>: session.<span class="hljs-property">userId</span>, <span class="hljs-attr">name</span>: session.<span class="hljs-property">name</span> } : <span class="hljs-literal">null</span>;
+    },
+    <span class="hljs-attr">loginUrl</span>: <span class="hljs-string">&#x27;/login&#x27;</span>, <span class="hljs-comment">// where the dashboard sends people who are not signed in</span>
+  }),
+});</code></pre></div>
+<p><code>getUser</code> is the only gate on the dashboard, so it must return a user only for people
+who may install code on the site.</p>
+<p class="check"><strong>Check:</strong> someone who is not an administrator cannot open the dashboard.</p>
+<h2 id="6-add-slots-to-the-layout"><a class="anchor" href="#6-add-slots-to-the-layout" aria-label="Link to this section">#</a>6. Add slots to the layout</h2>
+<p>A slot is a named place in your layout where an installed plugin may render something:
+a cart button, a chat bubble, a banner. A slot renders nothing while no plugin fills it,
+and a slot that fails is left out rather than breaking the page.</p>
+<div class="code"><div class="code-head"><span>tsx</span><button type="button" class="code-copy" data-copy="// app/layout.tsx
+import { np } from '@/lib/nextpluggable';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    &lt;html lang=&quot;en&quot;&gt;
+      &lt;body&gt;
+        &lt;header&gt;
+          &lt;nav&gt;
+            {/* your links */}
+            &lt;np.Slot name=&quot;header.actions&quot; /&gt;
+          &lt;/nav&gt;
+        &lt;/header&gt;
+        {children}
+        &lt;footer&gt;
+          &lt;np.Slot name=&quot;footer&quot; /&gt;
+        &lt;/footer&gt;
+        &lt;np.Slot name=&quot;body.end&quot; /&gt;
+      &lt;/body&gt;
+    &lt;/html&gt;
+  );
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// app/layout.tsx</span>
+<span class="hljs-keyword">import</span> { np } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@/lib/nextpluggable&#x27;</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">RootLayout</span>(<span class="hljs-params">{ children }: { children: React.ReactNode }</span>) {
+  <span class="hljs-keyword">return</span> (
+    <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">html</span> <span class="hljs-attr">lang</span>=<span class="hljs-string">&quot;en&quot;</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">header</span>&gt;</span>
+          <span class="hljs-tag">&lt;<span class="hljs-name">nav</span>&gt;</span>
+            {/* your links */}
+            <span class="hljs-tag">&lt;<span class="hljs-name">np.Slot</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;header.actions&quot;</span> /&gt;</span>
+          <span class="hljs-tag">&lt;/<span class="hljs-name">nav</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">header</span>&gt;</span>
+        {children}
+        <span class="hljs-tag">&lt;<span class="hljs-name">footer</span>&gt;</span>
+          <span class="hljs-tag">&lt;<span class="hljs-name">np.Slot</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;footer&quot;</span> /&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">footer</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">np.Slot</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;body.end&quot;</span> /&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span></span>
+  );
+}</code></pre></div>
+<p><code>np.Slot</code> is an async server component. The conventional names are <code>header.actions</code>,
+<code>footer</code> and <code>body.end</code>; plugins are written against them, so use those names where
+they fit. Slots are optional, but without <code>body.end</code> plugins that add floating widgets
+have nowhere to appear.</p>
+<p>If the layout wraps the page in client providers, put the slot inside them so plugin
+widgets share the same context as the rest of the page.</p>
+<p class="check"><strong>Check:</strong> the site still builds, and pages that were statically generated before are
+still statically generated (compare the route table printed by <code>next build</code>).</p>
+<h2 id="7-serve-plugin-pages"><a class="anchor" href="#7-serve-plugin-pages" aria-label="Link to this section">#</a>7. Serve plugin pages</h2>
+<h3 id="the-site-has-no-root-catch-all"><a class="anchor" href="#the-site-has-no-root-catch-all" aria-label="Link to this section">#</a>The site has no root catch-all</h3>
+<p>The generated <code>app/[...slug]/page.tsx</code> handles it. Addresses that your own routes do
+not handle land there. An installed plugin answers for the pages it adds, and every
+other address gets your normal 404 page.</p>
+<h3 id="the-site-already-has-a-catch-all-that-returns-404-for-unknown-addresses"><a class="anchor" href="#the-site-already-has-a-catch-all-that-returns-404-for-unknown-addresses" aria-label="Link to this section">#</a>The site already has a catch-all that returns 404 for unknown addresses</h3>
+<p>Render <code>np.PluginPage</code> where your own lookup finds nothing. It renders the plugin page
+that owns the address, or triggers your 404 when none does.</p>
+<div class="code"><div class="code-head"><span>tsx</span><button type="button" class="code-copy" data-copy="// app/[...slug]/page.tsx
+import { np } from '@/lib/nextpluggable';
+
+export async function generateMetadata(props: { params: Promise&lt;{ slug: string[] }&gt; }) {
+  const page = await findMyPage((await props.params).slug);
+  return page ? { title: page.title } : np.generatePluginMetadata(props);
+}
+
+export default async function Page(props: { params: Promise&lt;{ slug: string[] }&gt; }) {
+  const page = await findMyPage((await props.params).slug);
+  if (page) return &lt;MyPage page={page} /&gt;;
+  return &lt;np.PluginPage params={props.params} /&gt;;
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// app/[...slug]/page.tsx</span>
+<span class="hljs-keyword">import</span> { np } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@/lib/nextpluggable&#x27;</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">generateMetadata</span>(<span class="hljs-params"><span class="hljs-attr">props</span>: { params: <span class="hljs-built_in">Promise</span>&lt;{ slug: <span class="hljs-built_in">string</span>[] }&gt; }</span>) {
+  <span class="hljs-keyword">const</span> page = <span class="hljs-keyword">await</span> <span class="hljs-title function_">findMyPage</span>((<span class="hljs-keyword">await</span> props.<span class="hljs-property">params</span>).<span class="hljs-property">slug</span>);
+  <span class="hljs-keyword">return</span> page ? { <span class="hljs-attr">title</span>: page.<span class="hljs-property">title</span> } : np.<span class="hljs-title function_">generatePluginMetadata</span>(props);
+}
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">Page</span>(<span class="hljs-params"><span class="hljs-attr">props</span>: { params: <span class="hljs-built_in">Promise</span>&lt;{ slug: <span class="hljs-built_in">string</span>[] }&gt; }</span>) {
+  <span class="hljs-keyword">const</span> page = <span class="hljs-keyword">await</span> <span class="hljs-title function_">findMyPage</span>((<span class="hljs-keyword">await</span> props.<span class="hljs-property">params</span>).<span class="hljs-property">slug</span>);
+  <span class="hljs-keyword">if</span> (page) <span class="hljs-keyword">return</span> <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">MyPage</span> <span class="hljs-attr">page</span>=<span class="hljs-string">{page}</span> /&gt;</span></span>;
+  <span class="hljs-keyword">return</span> <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">np.PluginPage</span> <span class="hljs-attr">params</span>=<span class="hljs-string">{props.params}</span> /&gt;</span></span>;
+}</code></pre></div>
+<p><code>PluginPage</code> takes the route&#39;s own <code>params</code> and reads the address from its catch-all
+segment, whatever that segment is called. Other params, such as a <code>locale</code>, are
+ignored.</p>
+<h3 id="the-sites-catch-all-never-returns-404"><a class="anchor" href="#the-sites-catch-all-never-returns-404" aria-label="Link to this section">#</a>The site&#39;s catch-all never returns 404</h3>
+<p>Some catch-alls render something for every address, a landing page for any city name,
+say. Ask first, then decide:</p>
+<div class="code"><div class="code-head"><span>tsx</span><button type="button" class="code-copy" data-copy="import { np } from '@/lib/nextpluggable';
+
+/** Never throws: a storage outage must not take the rest of the route down. */
+async function pluginOwns(segments: string[]): Promise&lt;boolean&gt; {
+  if (segments.length === 0) return false;
+  try {
+    return await np.hasPluginPage(`/${segments.join('/')}`);
+  } catch (error) {
+    console.error('Plugin page lookup failed:', error);
+    return false;
+  }
+}
+
+export default async function Page(props: { params: Promise&lt;{ slug?: string[] }&gt; }) {
+  const segments = (await props.params).slug ?? [];
+  const mine = await findMyPage(segments);
+  if (mine) return &lt;MyPage page={mine} /&gt;;
+  if (await pluginOwns(segments)) return &lt;np.PluginPage params={props.params} /&gt;;
+  return &lt;FallbackPage segments={segments} /&gt;;
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-keyword">import</span> { np } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@/lib/nextpluggable&#x27;</span>;
+
+<span class="hljs-comment">/** Never throws: a storage outage must not take the rest of the route down. */</span>
+<span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">pluginOwns</span>(<span class="hljs-params"><span class="hljs-attr">segments</span>: <span class="hljs-built_in">string</span>[]</span>): <span class="hljs-title class_">Promise</span>&lt;<span class="hljs-built_in">boolean</span>&gt; {
+  <span class="hljs-keyword">if</span> (segments.<span class="hljs-property">length</span> === <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+  <span class="hljs-keyword">try</span> {
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> np.<span class="hljs-title function_">hasPluginPage</span>(<span class="hljs-string">`/<span class="hljs-subst">${segments.join(<span class="hljs-string">&#x27;/&#x27;</span>)}</span>`</span>);
+  } <span class="hljs-keyword">catch</span> (error) {
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">error</span>(<span class="hljs-string">&#x27;Plugin page lookup failed:&#x27;</span>, error);
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+  }
+}
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">Page</span>(<span class="hljs-params"><span class="hljs-attr">props</span>: { params: <span class="hljs-built_in">Promise</span>&lt;{ slug?: <span class="hljs-built_in">string</span>[] }&gt; }</span>) {
+  <span class="hljs-keyword">const</span> segments = (<span class="hljs-keyword">await</span> props.<span class="hljs-property">params</span>).<span class="hljs-property">slug</span> ?? [];
+  <span class="hljs-keyword">const</span> mine = <span class="hljs-keyword">await</span> <span class="hljs-title function_">findMyPage</span>(segments);
+  <span class="hljs-keyword">if</span> (mine) <span class="hljs-keyword">return</span> <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">MyPage</span> <span class="hljs-attr">page</span>=<span class="hljs-string">{mine}</span> /&gt;</span></span>;
+  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">await</span> <span class="hljs-title function_">pluginOwns</span>(segments)) <span class="hljs-keyword">return</span> <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">np.PluginPage</span> <span class="hljs-attr">params</span>=<span class="hljs-string">{props.params}</span> /&gt;</span></span>;
+  <span class="hljs-keyword">return</span> <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">FallbackPage</span> <span class="hljs-attr">segments</span>=<span class="hljs-string">{segments}</span> /&gt;</span></span>;
+}</code></pre></div>
+<p>Do the same in <code>generateMetadata</code>, returning <code>np.generatePluginMetadata(props)</code> when a
+plugin owns the address. Check your own pages before plugins, so a plugin can never
+take over an address the site depends on.</p>
+<h3 id="caching-plugin-pages-optional"><a class="anchor" href="#caching-plugin-pages-optional" aria-label="Link to this section">#</a>Caching plugin pages (optional)</h3>
+<p>By default plugin pages are rendered on each request, which is always correct. Adding
+two lines to the generated route makes Next.js render each plugin page once and serve
+it from its cache until something changes in the dashboard:</p>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="export const generateStaticParams = async () =&gt; [];
+export const revalidate = 3600;"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> <span class="hljs-title function_">generateStaticParams</span> = <span class="hljs-keyword">async</span> (<span class="hljs-params"></span>) =&gt; [];
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> revalidate = <span class="hljs-number">3600</span>;</code></pre></div>
+<p>Only do this when both of these hold:</p>
+<ul>
+<li><strong>The root layout does not read <code>cookies()</code> or <code>headers()</code> on the server.</strong> If it
+does, cached plugin pages and unknown addresses fail with a 500 error in production
+builds. It does not show in <code>next dev</code>, so check with <code>next build &amp;&amp; next start</code>.</li>
+<li><strong>Links to the site never carry private values in the query string.</strong> Next.js stores
+the address of the request that first generated a cached page, query string
+included, in that page&#39;s inline data, and serves it to later visitors.</li>
+</ul>
+<p>Do not use <code>export const dynamic = &#39;force-static&#39;</code> for this route.</p>
+<p class="check"><strong>Check:</strong> after installing a plugin with a page (<a href="#9-verify">step 9</a>), its address
+returns 200, and an address nobody owns still returns what it returned before.</p>
+<h2 id="8-sites-with-locale-routing-or-other-middleware"><a class="anchor" href="#8-sites-with-locale-routing-or-other-middleware" aria-label="Link to this section">#</a>8. Sites with locale routing or other middleware</h2>
+<p>Skip this step if the site has no middleware and its root layout renders <code>&lt;html&gt;</code>.</p>
+<p><strong>Keep the dashboard out of locale middleware.</strong> The dashboard lives at one fixed
+address. Middleware that prefixes or rewrites paths (next-intl and similar) would send
+<code>/admin/plugins</code> to <code>/en/admin/plugins</code>, which the site&#39;s own pages then answer.
+Exclude the dashboard path the same way the site already excludes other paths:</p>
+<div class="code"><div class="code-head"><span>ts</span><button type="button" class="code-copy" data-copy="// middleware.ts
+export const config = {
+  matcher: ['/((?!api|admin|_next|.*\\..*).*)'],
+};"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// middleware.ts</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> config = {
+  <span class="hljs-attr">matcher</span>: [<span class="hljs-string">&#x27;/((?!api|admin|_next|.*\\..*).*)&#x27;</span>],
+};</code></pre></div>
+<p>The API route lives under <code>/api</code>, which such matchers normally exclude already. Confirm
+that it does: the dashboard cannot work if <code>/api/nextpluggable</code> is rewritten.</p>
+<p><strong>Keep the dashboard outside the locale segment.</strong> Its file belongs at
+<code>app/admin/plugins/[[...np]]/page.tsx</code>, not under <code>app/[locale]</code>.</p>
+<p><strong>Give the dashboard its own <code>&lt;html&gt;</code> if the root layout has none.</strong> When <code>&lt;html&gt;</code> and
+<code>&lt;body&gt;</code> are rendered by a nested layout, such as <code>app/[locale]/layout.tsx</code>, routes
+outside it have neither:</p>
+<div class="code"><div class="code-head"><span>tsx</span><button type="button" class="code-copy" data-copy="// app/admin/layout.tsx
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    &lt;html lang=&quot;en&quot;&gt;
+      &lt;body&gt;{children}&lt;/body&gt;
+    &lt;/html&gt;
+  );
+}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment">// app/admin/layout.tsx</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">AdminLayout</span>(<span class="hljs-params">{ children }: { children: React.ReactNode }</span>) {
+  <span class="hljs-keyword">return</span> (
+    <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">html</span> <span class="hljs-attr">lang</span>=<span class="hljs-string">&quot;en&quot;</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>{children}<span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span></span>
+  );
+}</code></pre></div>
+<p><strong>Plugin pages under a locale segment.</strong> If the catch-all is
+<code>app/[locale]/[[...route]]/page.tsx</code>, pass its <code>params</code> to <code>np.PluginPage</code> unchanged.
+The plugin page is matched on the <code>route</code> part alone, so <code>/contact</code> and <code>/it/contact</code>
+both show the plugin&#39;s <code>/contact</code> page inside the right locale&#39;s layout. Its canonical
+link points at the address without the locale.</p>
+<p>To move the dashboard or the API to other addresses, set <code>dashboardPath</code> and <code>apiPath</code>
+in the settings and move the two files to match.</p>
+<p class="check"><strong>Check:</strong> <code>/admin/plugins</code> returns the dashboard, not a redirect and not one of the
+site&#39;s own pages, including for a browser whose language is not the default locale.</p>
+<h2 id="9-verify"><a class="anchor" href="#9-verify" aria-label="Link to this section">#</a>9. Verify</h2>
+<p>Run the site the way it runs in production. Some problems do not appear in <code>next dev</code>.</p>
+<div class="code"><div class="code-head"><span>bash</span><button type="button" class="code-copy" data-copy="npm run build
+npm run start"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code>npm run build
+npm run start</code></pre></div>
+<p>With the server on port 3000:</p>
+<div class="code"><div class="code-head"><span>bash</span><button type="button" class="code-copy" data-copy="# The API answers and nobody is signed in: 200, and &quot;user&quot;:null
+curl -s http://localhost:3000/api/nextpluggable/session
+
+# The dashboard's data is private: 401
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3000/api/nextpluggable/admin/state
+
+# The dashboard renders: 200
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3000/admin/plugins"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6c0 .69.56 1.25 1.25 1.25h.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Copy</span></button></div><pre><code><span class="hljs-comment"># The API answers and nobody is signed in: 200, and &quot;user&quot;:null</span>
+curl -s http://localhost:3000/api/nextpluggable/session
+
+<span class="hljs-comment"># The dashboard&#x27;s data is private: 401</span>
+curl -s -o /dev/null -w <span class="hljs-string">&#x27;%{http_code}\n&#x27;</span> http://localhost:3000/api/nextpluggable/admin/state
+
+<span class="hljs-comment"># The dashboard renders: 200</span>
+curl -s -o /dev/null -w <span class="hljs-string">&#x27;%{http_code}\n&#x27;</span> http://localhost:3000/admin/plugins</code></pre></div>
+<p>Then, in a browser:</p>
+<ol>
+<li>Open <code>/admin/plugins</code> and sign in.</li>
+<li>Under <strong>Sources</strong>, connect <code>https://github.com/rohittp0/NextPluggable</code>. It offers two
+reference plugins.</li>
+<li>Under <strong>Add plugins</strong>, install <strong>EMI Calculator</strong>. Open <code>/emi-calculator</code>: the
+calculator renders inside the site&#39;s own layout and reacts to input.</li>
+<li>Install <strong>Enquiry Form</strong>. If the layout has a <code>body.end</code> slot, a floating button
+appears on the site&#39;s pages.</li>
+<li>Pause or remove both plugins. Their pages and widgets disappear.</li>
+</ol>
+<p>Last, compare the route table from <code>next build</code> with the one from before the change.
+Routes that were static should still be static.</p>
+<h2 id="10-deploy"><a class="anchor" href="#10-deploy" aria-label="Link to this section">#</a>10. Deploy</h2>
+<ul>
+<li>Set <code>NEXTPLUGGABLE_PASSWORD</code>, <code>NEXTPLUGGABLE_SECRET</code> and the storage credentials on
+the host. The build needs the storage credentials too if static pages render a slot.</li>
+<li>On a serverless host, use <code>upstashStorage()</code> or <code>postgresStorage()</code>.</li>
+<li>Behind a proxy that rewrites the host, set <code>NEXT_PUBLIC_SITE_URL</code> (or <code>siteUrl</code>) to
+the public address. Otherwise the dashboard&#39;s writes are rejected as coming from
+another site.</li>
+<li>With several server instances, a change made in the dashboard reaches the other
+instances&#39; in-memory plugin list within about five seconds (<code>cacheTtlMs</code>), and cached
+pages rely on the host propagating Next.js revalidation.</li>
+</ul>
+<p>When anything changes in the dashboard, NextPluggable calls
+<code>revalidatePath(&#39;/&#39;, &#39;layout&#39;)</code>, so every cached page of the site is regenerated on its
+next visit. That is how a widget appears on pages that were built statically.</p>
+<h2 id="settings-reference"><a class="anchor" href="#settings-reference" aria-label="Link to this section">#</a>Settings reference</h2>
+<p>Everything <code>createNextPluggable()</code> accepts. All of it is optional.</p>
+<div class="table"><table>
+<thead><tr><th>Option</th><th>Default</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>siteName</code></td><td><code>&#39;Your site&#39;</code></td><td>Shown in the dashboard header</td></tr>
+<tr><td><code>auth</code></td><td><code>passwordAuth()</code></td><td>Who may use the dashboard: <code>passwordAuth({ password, sessionDays, cookieName })</code> or <code>customAuth({ getUser, loginUrl })</code></td></tr>
+<tr><td><code>storage</code></td><td><code>fileStorage()</code></td><td>Where data lives: <code>fileStorage({ dir })</code>, <code>upstashStorage({ url, token, prefix })</code>, <code>postgresStorage({ query, table })</code>, <code>memoryStorage()</code></td></tr>
+<tr><td><code>secret</code></td><td><code>NEXTPLUGGABLE_SECRET</code></td><td>Signs sessions and encrypts stored secrets</td></tr>
+<tr><td><code>siteUrl</code></td><td><code>NEXT_PUBLIC_SITE_URL</code>, then the host&#39;s own address</td><td>Public origin of the site</td></tr>
+<tr><td><code>dashboardPath</code></td><td><code>/admin/plugins</code></td><td>Must match where the dashboard page file is</td></tr>
+<tr><td><code>apiPath</code></td><td><code>/api/nextpluggable</code></td><td>Must match where the route handler file is</td></tr>
+<tr><td><code>github</code></td><td></td><td><code>{ token, apiUrl }</code>. <code>apiUrl</code> is for GitHub Enterprise</td></tr>
+<tr><td><code>allowLocalSources</code></td><td>Only outside production</td><td>Lets a folder on the server be connected as a source, for plugin development. <code>NEXTPLUGGABLE_ALLOW_LOCAL_SOURCES=1</code> switches it on in production</td></tr>
+<tr><td><code>cacheTtlMs</code></td><td><code>5000</code> (<code>0</code> in development)</td><td>How long the list of installed plugins is kept in memory per server instance</td></tr>
+</tbody>
+</table></div>
+<p>What the returned <code>np</code> object holds:</p>
+<div class="table"><table>
+<thead><tr><th>Member</th><th>Use</th></tr></thead>
+<tbody>
+<tr><td><code>np.handlers</code></td><td><code>{ GET, POST, PUT, PATCH, DELETE }</code> for the API route file</td></tr>
+<tr><td><code>np.DashboardPage</code>, <code>np.dashboardMetadata</code></td><td>The dashboard page and its metadata (<code>noindex</code>)</td></tr>
+<tr><td><code>np.PluginPage</code>, <code>np.generatePluginMetadata</code></td><td>The page a plugin adds at the requested address, and its SEO metadata</td></tr>
+<tr><td><code>np.hasPluginPage(pathname)</code></td><td>Resolves to <code>true</code> when a switched-on plugin serves a page at that address. Never triggers a 404</td></tr>
+<tr><td><code>np.Slot</code></td><td><code>&lt;np.Slot name=&quot;…&quot; /&gt;</code>, a place in the layout plugins may fill</td></tr>
+</tbody>
+</table></div>
+<p>Plugins cannot use <code>/_next</code>, <code>/api</code>, the dashboard path or the API path as page
+addresses. The dashboard refuses them.</p>
+<h2 id="security"><a class="anchor" href="#security" aria-label="Link to this section">#</a>Security</h2>
+<ul>
+<li><strong>Plugins are trusted code.</strong> A plugin&#39;s server code runs inside the site and can do
+anything the site can, like a WordPress plugin or an npm package. There is no
+sandbox. The owner should connect only sources they trust.</li>
+<li>Only sources the owner connects are used. Every install is pinned to an exact commit,
+and every file is checked against the fingerprint recorded when the plugin was built.</li>
+<li>The dashboard needs a sign-in for everything. Writes are protected against cross-site
+request forgery.</li>
+<li>Access tokens and secret settings are encrypted at rest and never sent back to the
+browser.</li>
+<li>Folder sources are off in production.</li>
+</ul>
+<h2 id="limits"><a class="anchor" href="#limits" aria-label="Link to this section">#</a>Limits</h2>
+<ul>
+<li>Next.js Cache Components mode is not supported.</li>
+<li>Node.js runtime only.</li>
+<li>Serverless hosts need a database adapter.</li>
+<li>Do not put a <code>loading.tsx</code> above the plugin-pages route while it is uncached. Next.js
+would start streaming before the plugin lookup finishes, and unknown addresses would
+return 200 with <code>noindex</code> instead of a 404.</li>
+<li>Plugins cannot read the query string on the server.</li>
+<li>Plugin storage is a simple key-value store: fine for settings, messages and small
+catalogues, not for large or heavily queried data.</li>
+</ul>
+<h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2>
+<div class="table"><table>
+<thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+<tbody>
+<tr><td>The dashboard says setup is incomplete, naming <code>NEXTPLUGGABLE_SECRET</code></td><td>No secret in production</td><td>Set a secret of at least 16 characters</td></tr>
+<tr><td>Sign-in answers &quot;No dashboard password has been set up yet&quot;</td><td><code>NEXTPLUGGABLE_PASSWORD</code> is empty</td><td>Set it and restart</td></tr>
+<tr><td>&quot;This request was blocked for security reasons&quot; on every change</td><td>The request&#39;s origin does not match the site, usually behind a proxy</td><td>Set <code>NEXT_PUBLIC_SITE_URL</code> to the public address</td></tr>
+<tr><td><code>/admin/plugins</code> redirects, or shows one of the site&#39;s own pages</td><td>Locale middleware handles the path</td><td>Exclude it (<a href="#8-sites-with-locale-routing-or-other-middleware">step 8</a>)</td></tr>
+<tr><td>Next.js reports missing <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags for the dashboard</td><td>The root layout is a pass-through</td><td>Add <code>app/admin/layout.tsx</code> (step 8)</td></tr>
+<tr><td>Installing fails with a read-only file system error</td><td>File storage on a serverless host</td><td>Use <code>upstashStorage()</code> or <code>postgresStorage()</code></td></tr>
+<tr><td>&quot;GitHub is limiting requests right now&quot;</td><td>The unauthenticated limit of 60 requests an hour</td><td>Set <code>NEXTPLUGGABLE_GITHUB_TOKEN</code></td></tr>
+<tr><td>A plugin is installed but its page shows the site&#39;s own content</td><td>The site&#39;s catch-all answers first</td><td>Serve plugin pages from it (<a href="#7-serve-plugin-pages">step 7</a>)</td></tr>
+<tr><td>A plugin is installed but paused</td><td>A required setting has no value</td><td>Fill it in on the plugin&#39;s settings screen</td></tr>
+<tr><td>A plugin&#39;s widget does not appear</td><td>The layout has no slot with that name</td><td>Add <code>&lt;np.Slot name=&quot;body.end&quot; /&gt;</code></td></tr>
+<tr><td>Unknown addresses return 200 instead of 404</td><td>A <code>loading.tsx</code> sits above the catch-all</td><td>Move it into a route group, or switch on caching</td></tr>
+<tr><td>Static pages became dynamic after adding a slot</td><td>A custom storage adapter calls <code>fetch</code> with <code>cache: &#39;no-store&#39;</code></td><td>Read storage without going through the <code>fetch</code> wrapper Next.js installs, as <code>upstashStorage()</code> does</td></tr>
+</tbody>
+</table></div>
+<h2 id="done-when"><a class="anchor" href="#done-when" aria-label="Link to this section">#</a>Done when</h2>
+<ul>
+<li><input disabled="" type="checkbox"> <code>next build</code> succeeds, and routes that were static are still static.</li>
+<li><input disabled="" type="checkbox"> <code>/admin/plugins</code> shows the dashboard and requires a sign-in.</li>
+<li><input disabled="" type="checkbox"> A plugin installed from the dashboard serves its page without a rebuild.</li>
+<li><input disabled="" type="checkbox"> An address that no page owns behaves as it did before.</li>
+<li><input disabled="" type="checkbox"> The password and secret are set on the host and are not in git.</li>
+<li><input disabled="" type="checkbox"> On a serverless host, storage is a database adapter.</li>
+</ul>
+<p>To write plugins for this site, continue with
+<a href="../build/">Build plugins</a>.</p>
+
+    <nav class="next" aria-label="Other guide">
+      <a href="../build/"><span>Other guide</span><strong>Build plugins <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></strong></a>
+    </nav>
+  </main>
+</div>
+<footer class="foot">
+  <div class="foot-in">
+    <p>NextPluggable is a working prototype. Plugins are trusted code: connect only sources you trust.</p>
+    <nav aria-label="More">
+      <a href="https://github.com/rohittp0/NextPluggable">GitHub</a>
+      <a href="https://www.npmjs.com/package/nextpluggable">npm</a>
+      <a href="../llms.txt">llms.txt</a>
+      <a href="https://github.com/rohittp0/NextPluggable/blob/main/docs/research.md">Why it is built this way</a>
+    </nav>
+  </div>
+</footer>
+<script src="../assets/site.js" defer></script>
+</body>
+</html>

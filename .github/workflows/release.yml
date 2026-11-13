@@ -6,6 +6,10 @@ name: Release
 on:
   push:
     branches: [main]
+    # A merge that only touches the documentation site does not publish a new version.
+    paths-ignore:
+      - 'docs/**'
+      - 'scripts/docs/**'
   workflow_dispatch:
 
 # One release at a time. A merge that lands while a release is running waits for it.
@@ -81,7 +85,7 @@ jobs:
           repo="https://github.com/$GITHUB_REPOSITORY"
           links="s#](docs/#]($repo/blob/main/docs/#g; s#](plugins/#]($repo/tree/main/plugins/#g"
           sed "$links" README.md > packages/nextpluggable/README.md
-          sed "$links" docs/writing-plugins.md > packages/plugin/README.md
+          sed "$links" docs/build.md > packages/plugin/README.md
           mkdir -p "$RUNNER_TEMP/release"
           # pnpm turns the `workspace:*` dependency into the real version.
           for dir in packages/plugin packages/nextpluggable; do
