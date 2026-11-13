@@ -2,7 +2,9 @@
   "name": "nextpluggable-monorepo",
   "private": true,
   "packageManager": "pnpm@10.28.0",
-  "engines": { "node": ">=20.16" },
+  "engines": {
+    "node": ">=20.16"
+  },
   "scripts": {
     "build": "pnpm --filter @nextpluggable/plugin build && pnpm --filter nextpluggable build && pnpm build:plugins",
     "build:plugins": "pnpm --filter \"./plugins/*\" build",
@@ -13,6 +15,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.1",
     "typescript": "~5.9.3",
     "vitest": "^5.1.0"
   }

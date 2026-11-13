@@ -29,8 +29,9 @@ export function parseGitHubUrl(input: string): GitHubLocation | null {
     if (!/^(www\.)?github\.com$/i.test(url.hostname)) return null;
     parts = url.pathname.split('/').filter(Boolean);
   } else {
-    parts = s.split('/').filter(Boolean);
-    if (parts.length !== 2) return null;
+    // Shorthand must be exactly `owner/repo`; anything path-like (`/srv/plugins`, `./plugins`) is not GitHub.
+    if (!/^[A-Za-z0-9_-][A-Za-z0-9._-]*\/[A-Za-z0-9._-]+$/.test(s)) return null;
+    parts = s.split('/');
   }
   const [owner, repoRaw, kind, ref, ...rest] = parts;
   if (!owner || !repoRaw) return null;
@@ -89,7 +90,12 @@ export function githubReader(location: GitHubLocation, options: GitHubReaderOpti
           `GitHub is limiting requests right now${mins ? ` — try again in about ${mins} minute${mins === 1 ? '' : 's'}` : ''}.${options.token ? '' : ' Adding an access token raises the limit.'}`,
         );
       }
-      throw new HttpError(400, `The access token does not have permission to read ${name}. It needs read access to the repository's contents.`);
+      throw new HttpError(
+        400,
+        options.token
+          ? `The access token does not have permission to read ${name}. It needs read access to the repository's contents.`
+          : `GitHub refused access to ${name}. If the repository is private, add an access token.`,
+      );
     }
     return res;
   }

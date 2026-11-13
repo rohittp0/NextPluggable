@@ -215,6 +215,13 @@ try {
     ])
       expect(body.includes(needle), `missing from server HTML: ${needle}`);
   });
+  await step('the page is cached like a static page, yet was live the moment it was installed', async () => {
+    // The address returned a (cached) 404 before the install; the install had to invalidate that.
+    const first = await fetch(`${base}/emi-calculator`);
+    const second = await fetch(`${base}/emi-calculator`);
+    expect(first.status === 200 && second.status === 200, 'page should be live');
+    expect(second.headers.get('x-nextjs-cache') === 'HIT', `expected a cache hit, got ${second.headers.get('x-nextjs-cache')}`);
+  });
   await step('it hydrates and stays interactive, with no errors', async () => {
     const pub = await context.newPage();
     watch(pub, 'emi page');

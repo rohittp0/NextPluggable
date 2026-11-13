@@ -183,7 +183,7 @@ export function checkPagePath(path: unknown): string | null {
       if (!KEY_RE.test(seg.slice(1))) return `has an invalid parameter name "${seg}"`;
       continue;
     }
-    if (!/^[A-Za-z0-9._~-]+$/.test(seg)) return `has an invalid segment "${seg}" (use letters, digits, dashes)`;
+    if (!/^[A-Za-z0-9._~-]+$/.test(seg) || seg === '.' || seg === '..') return `has an invalid segment "${seg}" (use letters, digits, dashes)`;
   }
   return null;
 }

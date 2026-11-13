@@ -203,7 +203,9 @@ export async function buildDashboardState(cfg: ResolvedConfig): Promise<Dashboar
         id: s.id,
         type: s.type,
         label: s.label,
-        url: s.github ? `https://github.com/${s.github.owner}/${s.github.repo}${s.github.dir || s.github.ref ? `/tree/${s.github.ref ?? 'HEAD'}/${s.github.dir ?? ''}` : ''}` : undefined,
+        url: s.github
+          ? `https://github.com/${s.github.owner}/${s.github.repo}${s.github.dir || s.github.ref ? `/tree/${s.github.ref ?? 'HEAD'}${s.github.dir ? `/${s.github.dir}` : ''}` : ''}`
+          : undefined,
         hasToken: Boolean(s.github?.token),
         addedAt: s.addedAt,
         checkedAt: c?.fetchedAt,
