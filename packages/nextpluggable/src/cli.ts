@@ -62,7 +62,7 @@ export const np = createNextPluggable({
   const existingCatchAll = (await readdir(appDir, { withFileTypes: true })).find((e) => e.isDirectory() && /^\[\[?\.\.\..+\]\]?$/.test(e.name));
   if (existingCatchAll) {
     result.notes.push(
-      `Your site already has a catch-all route (${rel(path.join(appDir, existingCatchAll.name))}). To serve plugin pages from it, render \`<np.PluginPage params={params} />\` there when your own lookup finds nothing.`,
+      `Your site already has a catch-all route (${rel(path.join(appDir, existingCatchAll.name))}). To serve plugin pages from it, render \`<np.PluginPage params={params} />\` there when your own lookup finds nothing, or ask \`await np.hasPluginPage(pathname)\` first if that route never returns a 404.`,
     );
   } else {
     const catchAll = path.join(appDir, '[...slug]', `page.${x}x`);

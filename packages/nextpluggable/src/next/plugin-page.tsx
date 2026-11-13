@@ -112,5 +112,14 @@ export function createPluginPage(getConfig: () => ResolvedConfig) {
     );
   }
 
-  return { PluginPage, generatePluginMetadata };
+  /**
+   * Whether an installed, switched-on plugin serves a page at this address. For sites
+   * whose own catch-all route has to choose between a plugin page and something of its
+   * own: unlike `PluginPage`, it never triggers the site's 404.
+   */
+  async function hasPluginPage(pathname: string): Promise<boolean> {
+    return findPage(await getInstalledPlugins(getConfig()), normalizePathname(pathname)) !== null;
+  }
+
+  return { PluginPage, generatePluginMetadata, hasPluginPage };
 }

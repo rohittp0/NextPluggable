@@ -43,6 +43,15 @@ ones:
 
 It also writes a generated dashboard password and secret to `.env.local`.
 
+If the site already has a root catch-all route, `init` leaves it alone. Serve plugin
+pages from it yourself: render `<np.PluginPage params={params} />` where your own lookup
+finds nothing, or, when that route never returns a 404 (a landing page for any address,
+say), ask first:
+
+```tsx
+if (await np.hasPluginPage(`/${segments.join('/')}`)) return <np.PluginPage params={params} />;
+```
+
 Optionally, mark places in your layout that plugins may fill:
 
 ```tsx

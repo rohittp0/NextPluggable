@@ -34,7 +34,7 @@ export function createNextPluggable(config: NextPluggableConfig = {}) {
       }
     },
   });
-  const { PluginPage, generatePluginMetadata } = createPluginPage(getConfig);
+  const { PluginPage, generatePluginMetadata, hasPluginPage } = createPluginPage(getConfig);
 
   return {
     /** Route handlers for `app/api/nextpluggable/[...np]/route.ts`. */
@@ -45,6 +45,11 @@ export function createNextPluggable(config: NextPluggableConfig = {}) {
     /** Page for the root catch-all `app/[...slug]/page.tsx`: serves pages added by plugins. */
     PluginPage,
     generatePluginMetadata,
+    /**
+     * `await np.hasPluginPage('/some/address')`: does a plugin serve a page there? Use it in a
+     * catch-all route of your own to decide whether to render `PluginPage` or your own content.
+     */
+    hasPluginPage,
     /** `<Slot name="…" />` — a place in your layout that plugins can fill. */
     Slot: createSlot(getConfig),
   };
