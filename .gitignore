@@ -2,6 +2,8 @@ node_modules/
 .next/
 .nextpluggable/
 packages/*/dist/
+# Copied in from the repository root when a release is packed
+packages/*/README.md
 *.tsbuildinfo
 .env
 .env.local

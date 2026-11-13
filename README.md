@@ -9,7 +9,7 @@ Plugins are full features, not UI snippets. One plugin can add server-rendered p
 that search engines index, HTTP endpoints, stored data, widgets in the site's layout,
 a settings form, and its own screens inside the dashboard.
 
-> **Status: working prototype, not yet published to npm.** Everything described here is
+> **Status: working prototype.** Everything described here is
 > implemented and covered by tests in this repository. See [Limits](#limits) before
 > relying on it, and [docs/research.md](docs/research.md) for why it is built this way.
 
@@ -243,3 +243,15 @@ pnpm e2e          # browser test, run twice (pages uncached, then cached); needs
 
 Rebuilding the plugins must leave `plugins/*/dist` unchanged: builds are reproducible,
 and the committed output is what sites install.
+
+### Releases
+
+Every merge to `main` publishes `nextpluggable` and `@nextpluggable/plugin` to npm
+under one shared version ([`release.yml`](.github/workflows/release.yml)), tags the
+commit and creates a GitHub release. The patch number goes up by one each time. For a
+minor or major release, set the new version in both `packages/*/package.json` files in
+the pull request; it is published as it is, and patch releases continue from there.
+
+The first release needs an npm access token in the repository secret `NPM_TOKEN`.
+Once the packages exist on npm, each can be given `release.yml` as a
+[trusted publisher](https://docs.npmjs.com/trusted-publishers) and the token removed.
